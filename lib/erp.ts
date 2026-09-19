@@ -132,7 +132,9 @@ export function mutateERP(request: Request, raw: unknown) {
         const account = requireAccount(request);
         if (company.wallet && company.wallet !== account) throw new Error('Şirketin kayıtlı cüzdanını bağlayın. Bu sürüm cüzdan sahipliği devrini desteklemez.');
         const existing = records<Company>('erp_company').find(c => c.wallet === account && c.id !== companyId);
-        if (existing) throw new Error('Bu cüzdan başka bir ERP çalışma alanına bağlı. O çalışma alanının tarayıcı oturumunu kullanın.');
+        // A Freighter signature proves control of this account. Reassign it from
+        // stale mock workspaces instead of trapping the user in an old browser session.
+        if (existing) putRecord('erp_company', existing.id, existing.id, {...existing, wallet: null});
         return putRecord('erp_company', companyId, companyId, {...company, wallet: account});
       }
       case 'contact': {
