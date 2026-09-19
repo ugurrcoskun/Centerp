@@ -1,0 +1,37 @@
+{
+  "passedAt": "2026-09-18T18:36:57.622Z",
+  "network": "TESTNET",
+  "origin": "http://127.0.0.1:3000",
+  "contractId": "CCDPQPUS5SIBJF6YK2FZZV65P45U5FK7A3TMUE25T62VS3GQ22OG76IL",
+  "merchant": "GB44KZPX666DS7EW4LPH3D3VUA27CVU75HJ4OX6NOCU2ODUDMUFFPWU2",
+  "buyer": "GCF7JQ65QAO7PU5D2UWDJOZMADKJCZSFNMA7C22C6OIUDEWSY7BCJ6GI",
+  "invoiceId": "2377146cb62527a54aae103eb95e3458c685cccd80b89ff18df7eae997dfbbb8",
+  "invoiceCode": "INV-2026-237714",
+  "trustlineHashes": [
+    "38e1b9fc4b727d82b431f1cfedac306683bb3d6d7800893a7e8428c296cb851b",
+    "39bbb0748185a9dfab72001d6b019cfce5736f391048241ad5c3d0abbe1dd4ea"
+  ],
+  "createHash": "dc5e694ae8e569eda385d134e23a3d8dec69271d0d4bdae82bb74f1115f0f447",
+  "depositId": "sep_3srz3nc8c5ok7pweymvo",
+  "depositHash": "aeaad5ecabff09f7cd55bfd0b189ab5737fd3f8d0c4bb7497c47a301675a49fc",
+  "fundHash": "ffb475bc12710a32893845b74026a1d204ca6cb319c2154f0dd7f9a36e86acb8",
+  "releaseHash": "5474498ed47507339cb22acf64ddd8686330f9743df4181944f987c4d41c7bfa",
+  "withdrawId": "sep_q9dw3vldfews78top01d",
+  "withdrawPaymentHash": "529e3e82b98e54c33f14463cc702a97bfce44108d3523af8ebfe94a9218eaf9e",
+  "assertions": [
+    "signed app sessions",
+    "USDC trustlines",
+    "SEP-1 discovery",
+    "SEP-10 anchor auth",
+    "SEP-38 locked quotes",
+    "SEP-6 deposit-exchange",
+    "mock bank simulation",
+    "on-chain escrow funding",
+    "no merchant receipt before release",
+    "buyer-authorized release",
+    "duplicate release rejected",
+    "SEP-6 withdraw-exchange",
+    "memo-id USDC payment",
+    "anchor completed withdrawals"
+  ]
+}

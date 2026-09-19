@@ -1,0 +1,16 @@
+node_modules/
+.next/
+.agents/
+.env*
+!.env.example
+data/
+.toolchain/
+contracts/**/target/
+contracts/**/test_snapshots/
+artifacts/*.secret
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.vercel/
+.DS_Store
