@@ -22,7 +22,7 @@ const anchorDepositValue = (payment: AnchorPayment | null) => {
   return String(Math.min(MAX_ANCHOR_TRY, Math.max(50, amount)));
 };
 const navigation = [{id: 'overview', name: 'Genel bakış', icon: LayoutDashboard}, {id: 'invoices', name: 'Faturalar', icon: FileText}, {id: 'payments', name: 'Ödemeler & escrow', icon: ShieldCheck}, {id: 'anchor', name: 'TRY ↔ USDC', icon: Landmark}, {id: 'network', name: 'Ağ & bağlantılar', icon: Blocks}] as const;
-const labels: Record<string, string> = {draft: 'Taslak', open: 'Ödeme bekliyor', funded: 'Escrow’da', released: 'Tahsil edildi', refunded: 'İade edildi', cancelled: 'İptal edildi', expired: 'Vadesi doldu', prepared: 'İmza bekliyor', pending: 'Doğrulanıyor', success: 'Doğrulandı', failed: 'Başarısız', completed: 'Tamamlandı', pending_user_transfer_start: 'Transfer bekliyor', pending_anchor: 'Anchor işliyor', pending_trust: 'Trustline bekliyor', pending_stellar: 'Stellar bekliyor', error: 'Hata', create: 'Fatura kaydı', fund: 'Escrow ödemesi', release: 'Teslim onayı', refund: 'İade', cancel: 'İptal', expire: 'Vade kapatma', trustline: 'USDC trustline', withdraw_payment: 'Anchor’a USDC gönderimi', erp_payment: 'ERP borç ödemesi'};
+const labels: Record<string, string> = {draft: 'Taslak', open: 'Ödeme bekliyor', funded: 'Escrow’da', released: 'Tahsil edildi', refunded: 'İade edildi', cancelled: 'İptal edildi', expired: 'Vadesi doldu', prepared: 'İmza bekliyor', pending: 'Doğrulanıyor', success: 'Doğrulandı', failed: 'Başarısız', completed: 'Tamamlandı', pending_user_transfer_start: 'Transfer bekliyor', pending_anchor: 'Anchor işliyor', pending_trust: 'Trustline bekliyor', pending_stellar: 'Stellar bekliyor', error: 'Hata', create: 'Fatura kaydı', fund: 'Escrow ödemesi', release: 'Teslim onayı', refund: 'İade', cancel: 'İptal', expire: 'Vade kapatma', trustline: 'USDC trustline', withdraw_payment: 'Anchor’a USDC gönderimi', erp_payment: 'ERP borç ödemesi', anchor_deposit: 'Anchor TRY → USDC'};
 const initial: BridgeState = {account: null, contract: '', invoices: [], transfers: [], operations: [], balances: {xlm: '0', usdc: '0', trustline: false, funded: false}, health: null, anchorAuthenticated: false};
 const date = (value: number, seconds = false) => new Date(seconds ? value * 1000 : value).toLocaleDateString('tr-TR', {day: '2-digit', month: 'short', year: 'numeric'});
 const localDate = (days: number) => {const d = new Date(Date.now() + days * 86400000); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);};
@@ -102,7 +102,11 @@ export default function App() {
     const savedAccount = localStorage.getItem('centerp_wallet_account');
     setRememberedAccount(savedAccount);
     setSessionReady(Boolean(data.account));
-    setState({...data, balances: {...balances, funded: Boolean(balances.funded) && Number(balances.xlm) >= MIN_FEE_XLM}});
+    const chainOperations = data.operations || [];
+    const anchorOperations = (data.transfers || [])
+      .filter((transfer: AnchorTransfer) => transfer.kind === 'deposit' && transfer.hash && !chainOperations.some((operation: ChainOperation) => operation.hash === transfer.hash))
+      .map((transfer: AnchorTransfer): ChainOperation => ({id: `anchor-${transfer.id}`, account: transfer.account, kind: 'anchor_deposit', anchorId: transfer.id, xdr: '', hash: transfer.hash!, status: transfer.status === 'completed' ? 'success' : 'pending', createdAt: transfer.createdAt}));
+    setState({...data, operations: [...chainOperations, ...anchorOperations], balances: {...balances, funded: Boolean(balances.funded) && Number(balances.xlm) >= MIN_FEE_XLM}});
     setLoading(false);
   }, []);
   useEffect(() => {load().catch(error => {setToast({text: error.message, error: true}); setLoading(false);});}, [load]);
