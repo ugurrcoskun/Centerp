@@ -55,7 +55,7 @@ export function openERP(request: Request) {
     let company: Company | null = null;
     try {company = erpCompany(request);} catch {}
     if (company) {
-      if (!process.env.ERP_DISABLE_DEFAULT_SEED && !company.demoVersion) {
+      if (!process.env.ERP_DISABLE_DEFAULT_SEED && company.demoVersion !== 3) {
         company = putRecord('erp_company', company.id, company.id, {...company, demo: true});
         mutateERP(request, {action: 'sample'});
         company = record<Company>('erp_company', company.id);
@@ -259,7 +259,7 @@ export function mutateERP(request: Request, raw: unknown) {
       case 'sample': {
         const hasCoreData = scope<Product>('product', companyId).length || scope<Contact>('contact', companyId).length || scope<Employee>('employee', companyId).length;
         if (hasCoreData && !company.demo) throw new Error('Örnek veri yalnızca boş veya örnek çalışma alanına eklenir.');
-        putRecord('erp_company', companyId, companyId, {...company, demo: true, demoVersion: 2});
+        putRecord('erp_company', companyId, companyId, {...company, demo: true, demoVersion: 3});
         const at = (daysAgo: number) => createdAt - daysAgo * 86400000;
         const contactIds: Record<string, string> = {};
         const contactSeeds = [
@@ -297,17 +297,18 @@ export function mutateERP(request: Request, raw: unknown) {
           }
         }
         const employeeSeeds = [
-          ['Ayşe Yılmaz · örnek', 'Operasyon', 'Operasyon yöneticisi', '58500'],
-          ['Mehmet Kaya · örnek', 'Üretim', 'Üretim sorumlusu', '49200'],
-          ['Elif Demir · örnek', 'Satış', 'Kurumsal satış uzmanı', '46750'],
-          ['Can Arslan · örnek', 'Finans', 'Finans uzmanı', '52200'],
-          ['Zeynep Şahin · örnek', 'Lojistik', 'Depo ve sevkiyat uzmanı', '43800'],
+          ['Ayşe Yılmaz · örnek', 'Operasyon', 'Operasyon yöneticisi', '2850'],
+          ['Mehmet Kaya · örnek', 'Üretim', 'Üretim sorumlusu', '2700'],
+          ['Elif Demir · örnek', 'Satış', 'Kurumsal satış uzmanı', '2600'],
+          ['Can Arslan · örnek', 'Finans', 'Finans uzmanı', '2950'],
+          ['Zeynep Şahin · örnek', 'Lojistik', 'Depo ve sevkiyat uzmanı', '2500'],
         ] as const;
         for (const [name, department, role, salary] of employeeSeeds) {
-          if (!scope<Employee>('employee', companyId).some(row => row.name === name)) {
+          const existing = scope<Employee>('employee', companyId).find(row => row.name === name);
+          if (!existing) {
             const employeeId = randomUUID();
             put('employee', employeeId, companyId, {id: employeeId, companyId, name, department, role, salary: amount(salary), wallet: '', createdAt: at(25)} satisfies Employee);
-          }
+          } else put('employee', existing.id, companyId, {...existing, department, role, salary: amount(salary)} satisfies Employee);
         }
         const ensureSale = (contactId: string, daysAgo: number, input: z.infer<typeof lineSchema>[]) => {
           if (scope<SalesOrder>('sales', companyId).some(row => row.contactId === contactId && row.lines.some(line => line.productId === input[0].productId))) return;
@@ -328,15 +329,20 @@ export function mutateERP(request: Request, raw: unknown) {
             journal(companyId, purchaseId, 'received', code('PO', purchaseId) + ' mal kabulü', 'Stok', 'Tedarikçi borçları', total);
           }
         };
-        ensurePurchase(contactIds.kuzey, 16, true, [{productId: productIds['RAW-001'], quantity: 20, unitPrice: '1250'}]);
+        ensurePurchase(contactIds.kuzey, 16, true, [{productId: productIds['RAW-001'], quantity: 2, unitPrice: '1250'}]);
         ensurePurchase(contactIds.eksen, 4, false, [{productId: productIds['RAW-002'], quantity: 24, unitPrice: '2850'}, {productId: productIds['RAW-003'], quantity: 30, unitPrice: '390'}]);
-        ensurePurchase(contactIds.anadolu, 11, true, [{productId: productIds['RAW-004'], quantity: 40, unitPrice: '160'}]);
+        ensurePurchase(contactIds.anadolu, 11, true, [{productId: productIds['RAW-004'], quantity: 10, unitPrice: '160'}]);
         if (!scope<ProductionJob>('production', companyId).some(row => row.outputId === productIds['PRD-002'] && row.status === 'planned')) {
           const productionId = randomUUID();
           put('production', productionId, companyId, {id: productionId, companyId, code: code('WO', productionId), outputId: productIds['PRD-002'], quantity: 5, inputs: [{productId: productIds['RAW-001'], perUnit: 2}, {productId: productIds['RAW-002'], perUnit: 1}, {productId: productIds['RAW-003'], perUnit: 2}], status: 'planned', createdAt: at(1)} satisfies ProductionJob);
         }
         const period = new Date().toISOString().slice(0, 7);
         const payables = scope<Payable>('payable', companyId);
+        const sampleAmounts = new Map(scope<Employee>('employee', companyId).map(row => [row.id, row.salary]));
+        for (const payable of payables) {
+          const amountForPayable = payable.type === 'salary' ? sampleAmounts.get(payable.recipientId) : payable.recipient.startsWith('Kuzey Tedarik') ? '2500.0000000' : payable.recipient.startsWith('Anadolu Ambalaj') ? '1600.0000000' : undefined;
+          if (payable.status === 'open' && amountForPayable) put('payable', payable.id, companyId, {...payable, amount: amountForPayable} satisfies Payable);
+        }
         for (const employee of scope<Employee>('employee', companyId)) {
           if (payables.some(row => row.type === 'salary' && row.recipientId === employee.id && row.period === period)) continue;
           const payrollId = randomUUID();
