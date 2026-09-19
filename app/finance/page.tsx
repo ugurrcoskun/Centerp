@@ -102,7 +102,7 @@ export default function App() {
     const savedAccount = localStorage.getItem('centerp_wallet_account');
     setRememberedAccount(savedAccount);
     setSessionReady(Boolean(data.account));
-    setState({...data, account: data.account || savedAccount, balances: {...balances, funded: Boolean(balances.funded) && Number(balances.xlm) >= MIN_FEE_XLM}});
+    setState({...data, balances: {...balances, funded: Boolean(balances.funded) && Number(balances.xlm) >= MIN_FEE_XLM}});
     setLoading(false);
   }, []);
   useEffect(() => {load().catch(error => {setToast({text: error.message, error: true}); setLoading(false);});}, [load]);
