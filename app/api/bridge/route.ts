@@ -69,8 +69,6 @@ export async function POST(request: Request) {
     const account = requireAccount(request);
     switch (input.action) {
       case 'friendbot': {
-        const wallet = await balances(account);
-        if (wallet.funded) throw new Error('Hesap zaten Testnet’te fonlanmış.');
         return reply(await fetchJson(`https://friendbot.stellar.org?addr=${account}`));
       }
       case 'anchorChallenge': return reply(await anchorChallenge(account));

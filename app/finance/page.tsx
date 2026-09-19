@@ -14,6 +14,7 @@ type Page = 'overview' | 'invoices' | 'payments' | 'anchor' | 'network';
 type PaymentRoute = 'TRY' | 'USDC';
 type AnchorPayment = {id: string; code: string; recipient: string; amount: string};
 const MAX_ANCHOR_TRY = 3000;
+const MIN_FEE_XLM = 1;
 const anchorDepositValue = (payment: AnchorPayment | null) => {
   if (!payment) return '250';
   const amount = Number(payment.amount);
@@ -65,6 +66,9 @@ export default function App() {
   // TRY is the default collection entry point; the Anchor settles it to USDC for Stellar escrow.
   const [paymentRoute, setPaymentRoute] = useState<PaymentRoute>('TRY');
   const [walletFeedback, setWalletFeedback] = useState<{status: 'working' | 'success' | 'error'; text: string} | null>(null);
+  const [rememberedAccount, setRememberedAccount] = useState<string | null>(null);
+  const [sessionReady, setSessionReady] = useState(false);
+  useEffect(() => {setRememberedAccount(localStorage.getItem('centerp_wallet_account'));}, []);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setRequestedOrder(params.get('order') || '');
@@ -94,7 +98,11 @@ export default function App() {
     if (!response.ok) throw new Error(data.error);
     if (requestId !== loadRequest.current) return;
     setBalanceError(data.balanceError || '');
-    setState({...data, balances: data.balances || initial.balances});
+    const balances = data.balances || initial.balances;
+    const savedAccount = localStorage.getItem('centerp_wallet_account');
+    setRememberedAccount(savedAccount);
+    setSessionReady(Boolean(data.account));
+    setState({...data, account: data.account || savedAccount, balances: {...balances, funded: Boolean(balances.funded) && Number(balances.xlm) >= MIN_FEE_XLM}});
     setLoading(false);
   }, []);
   useEffect(() => {load().catch(error => {setToast({text: error.message, error: true}); setLoading(false);});}, [load]);
@@ -136,6 +144,9 @@ export default function App() {
       const session = await api<{account: string}>('session', {id: challenge.id, signedXdr});
       if (session.account !== address) throw new Error('Doğrulanan hesap Freighter’daki hesapla eşleşmedi.');
       setState(current => ({...current, account: session.account}));
+      setSessionReady(true);
+      localStorage.setItem('centerp_wallet_account', session.account);
+      setRememberedAccount(session.account);
       await load();
       setWalletFeedback({status: 'success', text: `Cüzdan bağlandı: ${shortAddress(address)} · Testnet oturumu doğrulandı.`});
       setToast({text: 'Cüzdan bağlandı. İmza ile oturumunuz doğrulandı.'});
@@ -145,12 +156,31 @@ export default function App() {
       setToast({text: message, error: true});
     } finally {setBusy('');}
   }
+  async function resumeSession() {
+    const account = rememberedAccount;
+    if (!account) throw new Error('Önce cüzdanınızı bağlayın.');
+    setWalletFeedback({status: 'working', text: 'Kaydedilmiş Freighter hesabıyla oturum yenileniyor. İmza talebini onaylayın.'});
+    const challenge = await api<{id: string; xdr: string}>('challenge', {account});
+    const signedXdr = await signXdr(challenge.xdr, account);
+    const session = await api<{account: string}>('session', {id: challenge.id, signedXdr});
+    setState(current => ({...current, account: session.account}));
+    setSessionReady(true);
+    setWalletFeedback({status: 'success', text: `Cüzdan oturumu yenilendi: ${shortAddress(session.account)}.`});
+    return session.account;
+  }
   function choosePaymentRoute(value: PaymentRoute) {
     setPaymentRoute(value);
     localStorage.setItem('centerp_payment_route', value);
     setToast({text: value === 'TRY' ? 'TRY → USDC Anchor yolu seçildi.' : 'Stellar USDC doğrudan tahsilat için varsayılan yapıldı.'});
   }
   function payERPRecord(payableId: string) {
+    if (!sessionReady && rememberedAccount) {
+      void run('Cüzdan oturumu', async () => {await resumeSession(); openERPRecord(payableId);});
+      return;
+    }
+    openERPRecord(payableId);
+  }
+  function openERPRecord(payableId: string) {
     if (paymentRoute === 'TRY') {
       const payable = erp?.payables.find(row => row.id === payableId);
       if (!payable) {setToast({text: 'Ödeme kaydı bulunamadı.', error: true}); return;}
@@ -164,10 +194,11 @@ export default function App() {
     void run('ERP borç ödemesi', () => execute('erp_payment', undefined, undefined, payableId));
   }
   async function execute(kind: string, invoiceId?: string, anchorId?: string, payableId?: string) {
-    if (!state.account) throw new Error('Önce cüzdanınızı bağlayın.');
+    const account = sessionReady && state.account ? state.account : await resumeSession();
+    if (Number(state.balances.xlm) < MIN_FEE_XLM) throw new Error('Stellar işlem ücreti için yeterli XLM yok. TRY ↔ USDC ekranından Testnet XLM alın ve işlemi tekrar deneyin.');
     let operation = await api<ChainOperation>('prepare', {kind, invoiceId, anchorId, payableId});
     if (operation.status === 'prepared') {
-      const signedXdr = await signXdr(operation.xdr, state.account);
+      const signedXdr = await signXdr(operation.xdr, account);
       operation = await api<ChainOperation>('submit', {id: operation.id, signedXdr});
     }
     for (let attempt = 0; attempt < 12 && operation.status === 'pending'; attempt++) {
