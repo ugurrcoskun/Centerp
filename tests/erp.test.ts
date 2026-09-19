@@ -6,7 +6,7 @@ import {join} from 'node:path';
 import {Keypair, TransactionBuilder} from '@stellar/stellar-sdk';
 import {challenge, createSession} from '../lib/auth';
 import {STELLAR} from '../lib/config';
-import {attachInvoice, erpState, mutateERP, openERP, orderForInvoice, payableForPayment, settlePayable, syncERPInvoice} from '../lib/erp';
+import {attachInvoice, erpState, mutateERP, openERP, orderForInvoice, payableForAnchor, payableForPayment, settlePayable, syncERPInvoice} from '../lib/erp';
 import {putRecord} from '../lib/db';
 import {linkedAnchorPaymentAmount} from '../lib/stellar';
 import type {Company, Contact, Employee, ERPState, Product, ProductionJob, PurchaseOrder, SalesOrder} from '../lib/erp-types';
@@ -158,6 +158,15 @@ test('payable settlement requires company wallet, recipient key and an immutable
   assert.equal(snapshot(w).payables[0].status,'paid');
   assert.throws(()=>payableForPayment(w.company.id,payable.id,w.key.publicKey()),/zaten ödendi/);
   assert.throws(()=>settlePayable(w.company.id,payable.id,'different-hash'));
+});
+
+test('Anchor bank instructions do not require the recipient wallet before final Stellar settlement',()=>{
+  const w=bind(workspace());const vendor=contact(w,'vendor');const item=product(w,'ANCHOR-FIRST',0);
+  const purchase=w.change('purchase',{contactId:vendor.id,lines:[{productId:item.id,quantity:1,unitPrice:'50'}]}) as PurchaseOrder;
+  w.change('receive',{id:purchase.id});
+  const payable=snapshot(w).payables[0];
+  assert.equal(payableForAnchor(w.company.id,payable.id,w.key.publicKey()).id,payable.id);
+  assert.throws(()=>payableForPayment(w.company.id,payable.id,w.key.publicKey()),/Alıcının Stellar cüzdanı eksik/);
 });
 
 test('TRY-linked ERP payments use the Anchor quote USDC output, never the TRY face value',()=>{

@@ -4,7 +4,7 @@ import {z} from 'zod';
 import {accountFromRequest, assertOrigin, challenge, COOKIE, createSession, logout, publicKey, requireAccount} from '@/lib/auth';
 import {anchorChallenge, anchorLogin, discoverAnchor, isAnchorAuthenticated, refreshTransfer, requestQuote, simulateTransfer, startTransfer} from '@/lib/anchor';
 import {amount} from '@/lib/amount';
-import {attachInvoice, erpCompany, orderForInvoice, payableForPayment, transaction} from '@/lib/erp';
+import {attachInvoice, erpCompany, orderForInvoice, payableForAnchor, transaction} from '@/lib/erp';
 import {STELLAR} from '@/lib/config';
 import {hydrateDatabase, persistDatabase, putRecord, records} from '@/lib/db';
 import {fetchJson, parseRequestJson} from '@/lib/http';
@@ -100,7 +100,7 @@ export async function POST(request: Request) {
         if (input.payableId) {
           if (input.kind !== 'deposit') throw new Error('ERP borcu yalnızca TRY yatırma akışına bağlanabilir.');
           const company = erpCompany(request);
-          const {payable} = payableForPayment(company.id, input.payableId, account);
+          const payable = payableForAnchor(company.id, input.payableId, account);
           if (Number(payable.amount) > 3000) throw new Error('Bu ERP ödemesi 3.000 TRY sınırını aşıyor. Daha düşük bir ödeme kaydı kullanın.');
           if (Number(input.amount) !== Number(payable.amount)) throw new Error('Anchor tutarı ERP ödeme kaydıyla eşleşmiyor. Ödeme satırından yeniden başlatın.');
           erp = {companyId: company.id, payableId: payable.id};

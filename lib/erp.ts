@@ -393,12 +393,17 @@ export function syncERPInvoice(invoice: Invoice, kind: string, hash: string) {
     put('sales', order.id, company.id, {...order, status: statuses[invoice.status] || 'invoiced'});
   });
 }
-export function payableForPayment(companyId: string, payableId: string, account: string) {
+export function payableForAnchor(companyId: string, payableId: string, account: string) {
   const company = record<Company>('erp_company', companyId);
   if (company.wallet !== account) throw new Error('Şirketin Stellar cüzdanını bağlayın.');
   const payable = companyRecord<Payable>('payable', payableId, companyId);
   if (payable.status !== 'open') throw new Error('Bu borç zaten ödendi.');
+  return payable;
+}
+export function payableForPayment(companyId: string, payableId: string, account: string) {
+  const payable = payableForAnchor(companyId, payableId, account);
   const recipient = payable.type === 'vendor' ? companyRecord<Contact>('contact', payable.recipientId, companyId) : companyRecord<Employee>('employee', payable.recipientId, companyId);
+  if (!recipient.wallet) throw new Error(`Alıcının Stellar cüzdanı eksik. ERP’de ${payable.type === 'vendor' ? 'tedarikçi' : 'çalışan'} kaydına Testnet public key ekleyin.`);
   const destination = publicKey(recipient.wallet);
   if (destination === account) throw new Error('Alıcı cüzdanı şirket cüzdanından farklı olmalı.');
   return {payable, destination};
