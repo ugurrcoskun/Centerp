@@ -1,4 +1,4 @@
-# StellarPay ERP
+# Centerp
 
 Ana ürün şirketin ERP çalışma alanıdır: müşteri/tedarikçi, satış, satın alma, stok, üretim, insan kaynakları ve muhasebe aynı kaydı paylaşır. Stellar bu ERP’nin ödeme, escrow ve mutabakat altyapısıdır. Fatura → TRY banka simülasyonu → USDC → Soroban escrow → teslim onayı → tahsilat → TRY çekim akışı finans modülündedir. Rise In × Stellar Pro Hackathon 2026 Genesis Track için geliştirilen **yalnızca Testnet** uygulaması.
 
@@ -16,7 +16,7 @@ Ana panel `/`, Stellar finans modülü `/finance` adresindedir. ERP iş verileri
 
 İlk açılışta boş şirket alanı oluşturulur. **Örnek operasyon verilerini yükle** ile müşteri, tedarikçi, ürün ve çalışan örnekleri eklenebilir. Örnek veri ödeme/tahsilat oluşturmaz ve açıkça işaretlenir. Kayıtların cüzdan alanına gerçek Testnet public key’i ekleyip şirket cüzdanını finans modülünde eşleştirin.
 
-[ERP ürün kapsamı ve mimarisi](ERP_PROJE_KAPSAMI.md) güncel ürün tanımıdır. [Arayüz renk sistemi ve araştırması](docs/UI_DESIGN_SYSTEM.md) kırmızı paletin tokenlarını, semantik rollerini ve kaynaklarını açıklar. Önceki kapsamlı Invoice Bridge araştırması finans modülünün teknik referansı olarak korunmuştur.
+[Centerp ürün kapsamı ve mimarisi](CENTERP_PROJE_KAPSAMI.md) güncel ürün tanımıdır. [Arayüz renk sistemi ve araştırması](docs/UI_DESIGN_SYSTEM.md) kırmızı paletin tokenlarını, semantik rollerini ve kaynaklarını açıklar. Önceki kapsamlı Invoice Bridge araştırması finans modülünün teknik referansı olarak korunmuştur.
 
 **ERP–Stellar doğrulaması:** `npm run test:erp` gerçek Testnet’te geçti. Satın alma → üretim → satış faturası → escrow tahsilatı → tedarikçi ve çalışan ödemesi → yedi muhasebe kaydı doğrulandı. [ERP Testnet kanıtı](artifacts/erp-testnet-proof.json).
 
@@ -178,7 +178,7 @@ tests/                       ERP iş akışları, tutar, oturum ve DB testleri
 artifacts/                   Public deployment ve Testnet doğrulama kanıtları
 docs/hackathon-tracks.md     Kullanıcının eklediği organizatör rehberi
 docs/anchor-reference.md     Kullanıcının eklediği mock Anchor referansı
-STELLAR_INVOICE_BRIDGE_PROJE_ARASTIRMASI.md  Kapsamlı proje araştırması
+CENTERP_STELLAR_ARASTIRMASI.md               Kapsamlı proje araştırması
 data/                        Git dışı kalıcı SQLite
 .toolchain/                  Git dışı yerel Rust ve Stellar CLI
 ```

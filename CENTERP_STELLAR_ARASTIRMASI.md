@@ -1,12 +1,12 @@
-> **18 Eylül 2026 kapsam düzeltmesi:** Ana ürün artık **StellarPay ERP** şirket çalışma alanıdır. Bu belge finans/Anchor/escrow modülünün teknik araştırmasıdır. Güncel ERP kapsamı için [ERP_PROJE_KAPSAMI.md](ERP_PROJE_KAPSAMI.md) dosyasına bakın.
+> **19 Eylül 2026 kapsam düzeltmesi:** Ana ürün artık **Centerp** şirket çalışma alanıdır. Bu belge finans/Anchor/escrow modülünün teknik araştırmasıdır. Güncel ERP kapsamı için [CENTERP_PROJE_KAPSAMI.md](CENTERP_PROJE_KAPSAMI.md) dosyasına bakın.
 
-# Stellar Invoice Bridge — Proje Araştırması ve Hackathon MVP Tasarımı
+# Centerp — Stellar Araştırması ve Hackathon MVP Tasarımı
 
 **Araştırma tarihi:** 18 Eylül 2026  
 **Etkinlik:** Rise In × Stellar Pro Hackathon, 19–20 Eylül 2026, Grand Pera / İstanbul  
 **Track:** Genesis  
 **Ağ:** Yalnızca Stellar Testnet  
-**Çalışma adı:** Stellar Invoice Bridge; önceki alternatif StellarPay ERP  
+**Ürün adı:** Centerp; önceki çalışma adları Stellar Invoice Bridge ve StellarPay ERP  
 **Belgenin durumu:** Kaynaklarla desteklenen araştırma ve önerilen uygulama tasarımı. Henüz geliştirilmiş veya uçtan uca test edilmiş bir ürünün raporu değildir.
 
 > Projenin ana fikri: Bir şirketin ödeme talebini, müşterinin TRY ile test USDC edinmesini, USDC'nin escrow'a yatırılmasını, teslimat onayından sonra satıcıya geçmesini ve satıcının TRY çekimini tek bir faturaya bağlı işlem dosyasında izlemek.

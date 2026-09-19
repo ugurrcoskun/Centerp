@@ -1,4 +1,4 @@
-# StellarPay ERP — güncel ürün kapsamı
+# Centerp — güncel ürün kapsamı
 
 > 18 Eylül 2026 kullanıcı düzeltmesi: Ana ürün şirketin ERP çalışma alanıdır. Stellar, bu ERP'nin ödeme, escrow ve mutabakat altyapısıdır. Önceki Invoice Bridge uygulaması finans modülü olarak korunmuştur.
 

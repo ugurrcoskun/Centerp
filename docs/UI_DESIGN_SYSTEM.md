@@ -1,8 +1,8 @@
-# StellarPay ERP arayüz sistemi
+# Centerp arayüz sistemi
 
 ## Tasarım yönü
 
-StellarPay ERP, bir tanıtım sayfası değil; gün boyunca açık sipariş, borç, stok riski ve Stellar mutabakatı arasında çalışan bir operasyon ekranıdır. Ana yüzey bu yüzden iş kuyruğu ile açılır. Kullanıcı önce bekleyen işi görür, sonra ilgili modüle gider.
+Centerp, bir tanıtım sayfası değil; gün boyunca açık sipariş, borç, stok riski ve Stellar mutabakatı arasında çalışan bir operasyon ekranıdır. Ana yüzey bu yüzden iş kuyruğu ile açılır. Kullanıcı önce bekleyen işi görür, sonra ilgili modüle gider.
 
 Tek güçlü görsel unsur, Stellar mutabakatı için kullanılan düz kırmızı dikey yüzeydir. Kırmızı; seçim, açık aksiyon ve ödeme hattını işaretler. Bilgi geri kalanı beyaz çalışma alanı, çizgisel ayırıcılar ve tablolarda yaşar.
 

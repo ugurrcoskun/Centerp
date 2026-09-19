@@ -1,8 +1,8 @@
-# StellarPay ERP — Master design system
+# Centerp — Master design system
 
 ## Product fit
 
-StellarPay ERP is a B2B operational and financial workspace for invoice, stock, purchasing, production, and Stellar Testnet settlement. Its primary job is to show the next actionable record before presenting a summary.
+Centerp is a B2B operational and financial workspace for invoice, stock, purchasing, production, and Stellar Testnet settlement. Its primary job is to show the next actionable record before presenting a summary.
 
 The product uses a soft operational dashboard style: 16–20 px rounded work surfaces, generous 14–22 px gaps, tabular numbers, and one red settlement rail. Red is used for direct actions and the settlement surface, never as a decorative left-edge accent. It is not a landing page and does not use a marketing hero, gradients, decorative process art, or repeated card mosaics.
 

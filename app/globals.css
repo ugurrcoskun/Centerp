@@ -24,7 +24,7 @@ html[data-theme=dark] .erp-art-node{background:#364b33;border-color:#4a6247;colo
 @media(max-height:800px) and (min-width:801px){.erp-shell .sidebar{padding-top:20px}.erp-shell .workspace{margin-top:22px;margin-bottom:16px}.erp-shell .sidebar .nav-link{padding-top:8px;padding-bottom:8px;font-size:11px}.erp-sidebar-finance{margin-top:10px;padding-top:12px}.erp-shell .nav-heading{margin-bottom:10px}.erp-shell .sidebar-footer{padding-top:12px}.erp-sidebar-bottom{padding-top:10px}}
 
 .erp-demo-banner{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:9px;margin:-5px 0 20px;line-height:1.8}.erp-demo-banner svg{color:#99a989}
-/* StellarPay ERP: Crimson Ledger. Flat colors only. */
+/* Centerp: Crimson Ledger. Flat colors only. */
 :root {
   --bg: #f7f4f3;
   --surface: #fffdfc;

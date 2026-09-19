@@ -1,4 +1,4 @@
-# StellarPay ERP — Kapsamlı Proje Analizi, Karşılaştırma ve Hackathon Değerlendirme Raporu
+# Centerp — Kapsamlı Proje Analizi, Karşılaştırma ve Hackathon Değerlendirme Raporu
 
 > **Tarih:** 19 Eylül 2026  
 > **Etkinlik:** Rise In × Stellar Pro Hackathon 2026 (Genesis Track)  
@@ -32,8 +32,8 @@ Küçük ve Orta Ölçekli İşletmelerde (KOBİ) veya reel sektör üreticileri
 3. **Çok Kalemli Operasyonların Şeffaflıktan Uzak Olması:**
    - Hangi sipariş için ne kadar hammadde tüketildi, bu hammadde hangi tedarikçiden alındı, tedarikçiye borç ödendi mi, mamul üretilip kime satıldı ve tahsilatı cüzdana ulaştı mı soruları farklı yazılımlarda ve Excel tablolarında kaybolur.
 
-### 1.2. StellarPay ERP'nin Getirdiği Çözüm
-StellarPay ERP, şirketin günlük ERP operasyonlarını **Stellar blokzincirinin ödeme ve Soroban escrow mekanizmasıyla doğal biçimde birleştiren hibrit bir ekosistemdir**:
+### 1.2. Centerp'in Getirdiği Çözüm
+Centerp, şirketin günlük ERP operasyonlarını **Stellar blokzincirinin ödeme ve Soroban escrow mekanizmasıyla doğal biçimde birleştiren hibrit bir ekosistemdir**:
 
 - **Satış Siparişi → Akıllı Sözleşme:** Satış siparişi açıldığında tutar ve müşteri cüzdanı kilitlenerek Soroban üzerinde faturaya dönüşür.
 - **Güvenli Fonlama (Escrow):** Müşteri tutarı (`USDC`) sözleşmeye yatırır (`Funded`). Satıcı paranın akıllı sözleşmede kilitli ve garanti altında olduğunu görerek üretime/sevkiyata başlar.
@@ -57,7 +57,7 @@ flowchart TD
         Freighter["Freighter Cüzdan (İmza)"]
     end
 
-    subgraph Backend ["StellarPay ERP Sunucusu (lib/anchor.ts)"]
+    subgraph Backend ["Centerp sunucusu (lib/anchor.ts)"]
         SEP1["SEP-1: Anchor Keşfi (stellar.toml)"]
         SEP10["SEP-10: WebAuth Challenge & JWT Oturumu"]
         SEP38["SEP-38: Locked Quote (TRY ⇄ USDC Kuru)"]
@@ -117,7 +117,7 @@ Geleneksel ERP sistemleri 1990'ların veritabanı mimarisi üzerine kuruludur. �
 
 ### 3.1. Detaylı Karşılaştırma Tablosu
 
-| Kriter / Özellik | Geleneksel ERP (SAP, Logo, Netsis, Dynamics) | StellarPay ERP |
+| Kriter / Özellik | Geleneksel ERP (SAP, Logo, Netsis, Dynamics) | Centerp |
 |---|---|---|
 | **Temel Felsefe** | Merkezi şirket içi defter-i kebir (İş bittikten sonra kayıt girilir) | Hibrit Çalışma Alanı + Programlanabilir Finansal Mutabakat |
 | **Ödeme ve Tahsilat Güvencesi** | **Yok.** Vadeli çek, senet veya açık hesap. Tahsilat riski ve dava süreçleri yaygındır. | **Soroban Escrow.** Fonlar bağımsız akıllı sözleşmede kilitlenir; risk sıfırlanır. |
@@ -207,7 +207,7 @@ Bir projeyi jüriye savunurken veya gerçek hayata taşırken blokzincirin sın�
 
 Hackathon el kitabında ([`docs/hackathon-tracks.md`](file:///Users/mac1/Documents/projeler/stellarpay-erp/docs/hackathon-tracks.md)) yer alan resmi 6 kriter üzerinden projenin puanlama analizi:
 
-| Kriter | Ağırlık / Önem | StellarPay ERP'nin Durumu | Puan (1-10) |
+| Kriter | Ağırlık / Önem | Centerp'in Durumu | Puan (1-10) |
 |---|---|---|---|
 | **1. Meaningful Idea & Impact** | Yüksek | B2B ticaret, KOBİ finansmanı ve vadeli satış güvenliği. Kripto spekülasyonu değil, reel ekonomi çözümü. | **9.5 / 10** |
 | **2. Technical Implementation** | Kritik | Gerçek Testnet deployment'ı, Soroban Rust sözleşmesi, Next.js Fullstack, yerel DB, atomik stok/üretim testleri, uçtan uca kanıt dosyaları hazır. | **9.5 / 10** |
@@ -236,7 +236,7 @@ Hackathon el kitabında ([`docs/hackathon-tracks.md`](file:///Users/mac1/Documen
 Jüri karşısında 3-4 dakikalık demo yaparken izlenmesi gereken "Şampiyonluk Akışı":
 
 1. **Giriş Cümlesi (Hook - 30 sn):**  
-   *"Bugün Türkiye'de KOBİ'lerin en büyük sorunu faturayı kestikten sonra parayı tahsil edip edemeyeceğini bilememesidir. Biz StellarPay ERP ile geleneksel ERP süreçlerini Stellar'ın akıllı escrow raylarına bağladık."*
+   *"Bugün Türkiye'de KOBİ'lerin en büyük sorunu faturayı kestikten sonra parayı tahsil edip edemeyeceğini bilememesidir. Biz Centerp ile geleneksel ERP süreçlerini Stellar'ın akıllı escrow raylarına bağladık."*
 2. **Canlı Operasyon (60 sn):**  
    - Satın alma siparişi girin ve mal kabulü yapın → Stok artar, tedarikçi borcu doğar.
    - Üretim reçetesini tamamlayın → Hammaddeler düşer, mamul üretilir.
