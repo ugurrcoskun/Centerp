@@ -5,8 +5,14 @@ import {dirname, resolve} from 'node:path';
 const globals = globalThis as unknown as {bridgeDb?: DatabaseSync};
 export function db() {
   if (!globals.bridgeDb) {
-    const path = resolve(process.env.DATABASE_PATH || './data/bridge.sqlite');
-    mkdirSync(dirname(path), {recursive: true});
+    const isVercel = !!process.env.VERCEL;
+    const configured = process.env.DATABASE_PATH;
+    const path = configured === ':memory:'
+      ? ':memory:'
+      : resolve(configured || (isVercel ? '/tmp/bridge.sqlite' : './data/bridge.sqlite'));
+    if (path !== ':memory:') {
+      mkdirSync(dirname(path), {recursive: true});
+    }
     const database = new DatabaseSync(path);
     database.exec(`PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;
       CREATE TABLE IF NOT EXISTS records (kind TEXT NOT NULL, id TEXT NOT NULL, account TEXT NOT NULL, body TEXT NOT NULL, PRIMARY KEY(kind,id));

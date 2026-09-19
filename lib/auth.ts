@@ -61,5 +61,18 @@ export function requireAccount(request: Request) {
 }
 export function assertOrigin(request: Request) {
   const origin = request.headers.get('origin');
-  if (origin && origin !== new URL(request.url).origin && origin !== process.env.APP_ORIGIN) throw new Error('İstek kaynağına izin verilmedi.');
+  if (!origin) return;
+  const host = request.headers.get('x-forwarded-host') || request.headers.get('host');
+  const proto = request.headers.get('x-forwarded-proto') || 'https';
+  const forwardedOrigin = host ? `${proto}://${host}` : null;
+  const requestOrigin = new URL(request.url).origin;
+  if (
+    origin !== requestOrigin &&
+    origin !== forwardedOrigin &&
+    origin !== process.env.APP_ORIGIN &&
+    origin !== `https://${process.env.VERCEL_URL}` &&
+    origin !== `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  ) {
+    throw new Error('İstek kaynağına izin verilmedi.');
+  }
 }

@@ -10,7 +10,7 @@ import type {AnchorTransfer, ChainOperation, Invoice, InvoiceStatus} from './typ
 export const horizon = new Horizon.Server(STELLAR.horizon);
 export const soroban = new rpc.Server(STELLAR.rpc);
 export const usdc = new Asset(STELLAR.assetCode, STELLAR.issuer);
-export const contractId = () => process.env.NEXT_PUBLIC_ESCROW_CONTRACT_ID || '';
+export const contractId = () => process.env.NEXT_PUBLIC_ESCROW_CONTRACT_ID || 'CCDPQPUS5SIBJF6YK2FZZV65P45U5FK7A3TMUE25T62VS3GQ22OG76IL';
 
 export async function balances(account: string) {
   try {
