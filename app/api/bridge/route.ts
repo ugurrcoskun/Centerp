@@ -15,7 +15,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const reply = (value: unknown) => NextResponse.json(value, {headers: {'Cache-Control': 'no-store'}});
 const string = z.string().min(1).max(20000);
-const idString = z.string().min(1).max(200);
+const idString = z.string().min(1).max(20000);
 const actions = z.discriminatedUnion('action', [
   z.object({action: z.literal('challenge'), account: string}),
   z.object({action: z.literal('session'), id: idString, signedXdr: string}),
