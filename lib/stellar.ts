@@ -98,6 +98,11 @@ export async function submit(account: string, id: string, signedXdr: string) {
   const operation = record<ChainOperation>('operation', id);
   if (operation.account !== account) throw new Error('İşlem başka cüzdana ait.');
   if (operation.status === 'success' || operation.status === 'failed') return operation;
+  // A timeout leaves the first submission outcome unknown. Do not submit the
+  // same sequence number again: Horizon would reject that retry and we could
+  // incorrectly mark an already accepted transaction as failed. Pending
+  // operations are reconciled by the regular status polling instead.
+  if (operation.status === 'pending') return operation;
   const signed = TransactionBuilder.fromXDR(signedXdr, STELLAR.passphrase);
   if (!(signed instanceof Transaction) || Buffer.from(signed.hash()).toString('hex') !== operation.hash) throw new Error('İmzalanan işlem beklenen ağ, işlem veya tutarla eşleşmiyor.');
   assertSignature(signed, account);

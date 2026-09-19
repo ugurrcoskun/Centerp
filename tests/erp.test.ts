@@ -8,9 +8,9 @@ import {challenge, createSession} from '../lib/auth';
 import {STELLAR} from '../lib/config';
 import {attachInvoice, erpState, mutateERP, openERP, orderForInvoice, payableForAnchor, payableForPayment, settlePayable, syncERPInvoice} from '../lib/erp';
 import {putRecord} from '../lib/db';
-import {linkedAnchorPaymentAmount} from '../lib/stellar';
+import {linkedAnchorPaymentAmount, submit} from '../lib/stellar';
 import type {Company, Contact, Employee, ERPState, Product, ProductionJob, PurchaseOrder, SalesOrder} from '../lib/erp-types';
-import type {Invoice} from '../lib/types';
+import type {ChainOperation, Invoice} from '../lib/types';
 
 process.env.DATABASE_PATH=join(mkdtempSync(join(tmpdir(),'stellar-erp-tests-')),'erp.sqlite');
 process.env.ERP_DISABLE_DEFAULT_SEED='1';
@@ -178,6 +178,13 @@ test('TRY-linked ERP payments use the Anchor quote USDC output, never the TRY fa
   putRecord('anchor','anchor-try',w.key.publicKey(),{id:'anchor-try',account:w.key.publicKey(),kind:'deposit',status:'completed',amount:'2850.00',quoteId:'quote-try',erpCompanyId:w.company.id,erpPayableId:payable.id,createdAt:Date.now(),details:{}});
   assert.equal(linkedAnchorPaymentAmount(w.key.publicKey(),w.company.id,payable.id,'anchor-try'),'58.1730000');
   assert.throws(()=>linkedAnchorPaymentAmount(w.key.publicKey(),w.company.id,'wrong-payable','anchor-try'),/eşleşmiyor/);
+});
+
+test('a pending Stellar operation is never submitted again after an ambiguous response',async()=>{
+  const key=Keypair.random();
+  const operation:ChainOperation={id:'pending-operation',account:key.publicKey(),kind:'trustline',xdr:'',hash:'a'.repeat(64),status:'pending',createdAt:Date.now()};
+  putRecord('operation',operation.id,operation.account,operation);
+  assert.deepEqual(await submit(key.publicKey(),operation.id,'not-an-xdr'),operation);
 });
 
 test('escrow refund reverses revenue and receivables once without restoring shipped stock',()=>{
