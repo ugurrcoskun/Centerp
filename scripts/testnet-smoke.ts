@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {mkdirSync, writeFileSync} from 'node:fs';
 import {Keypair, Transaction, TransactionBuilder} from '@stellar/stellar-sdk';
 import {STELLAR} from '../lib/config';
+import {readApiJson} from '../lib/client-api';
 import type {AnchorTransfer, BridgeState, ChainOperation, Invoice} from '../lib/types';
 
 const origin = process.env.APP_ORIGIN || 'http://127.0.0.1:3000';
@@ -10,8 +11,7 @@ class TestWallet {
   key = Keypair.random(); cookie = '';
   async post<T>(action: string, params: Record<string, unknown> = {}): Promise<T> {
     const response = await fetch(`${origin}/api/bridge`, {method: 'POST', headers: {'Content-Type': 'application/json', Origin: origin, Cookie: this.cookie}, body: JSON.stringify({action, ...params})});
-    const body = await response.json();
-    if (!response.ok) throw new Error(`${action}: ${body.error}`);
+    const body = await readApiJson<Record<string, unknown>>(response, `${action}: sunucu yanıtı eksik.`);
     const cookie = response.headers.get('set-cookie');
     if (cookie) this.cookie = cookie.split(';')[0];
     return body as T;
@@ -21,7 +21,7 @@ class TestWallet {
     const challenge = await this.post<{id: string; xdr: string}>('challenge', {account: this.key.publicKey()});
     await this.post('session', {id: challenge.id, signedXdr: this.sign(challenge.xdr)});
   }
-  async state(): Promise<BridgeState> {const response = await fetch(`${origin}/api/bridge`, {headers: {Cookie: this.cookie}}); return response.json();}
+  async state(): Promise<BridgeState> {const response = await fetch(`${origin}/api/bridge`, {headers: {Cookie: this.cookie}}); return readApiJson<BridgeState>(response);}
   async operation(kind: string, invoiceId?: string, anchorId?: string) {
     let op = await this.post<ChainOperation>('prepare', {kind, invoiceId, anchorId});
     op = await this.post<ChainOperation>('submit', {id: op.id, signedXdr: this.sign(op.xdr)});

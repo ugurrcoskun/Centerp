@@ -6,6 +6,7 @@ import {CubeIcon, CurrencyCircleDollarIcon, FactoryIcon, ShoppingCartIcon, Truck
 import Decimal from 'decimal.js';
 import {Button} from '@/components/ui/button';
 import {money as formatMoney, sumAmounts} from '@/lib/amount';
+import {fetchApiJson} from '@/lib/client-api';
 import {explorer, shortAddress} from '@/lib/config';
 import type {Contact, Employee, ERPState, Product} from '@/lib/erp-types';
 
@@ -48,13 +49,13 @@ export default function ERPApp(){
   const [mobile,setMobile]=useState(false);
   const [search,setSearch]=useState('');
   const [period,setPeriod]=useState(month);
-  const load=useCallback(async()=>{const r=await fetch('/api/erp',{cache:'no-store'});const body=await r.json();if(!r.ok) throw new Error(body.error);setState(body);},[]);
+  const load=useCallback(async()=>{setState(await fetchApiJson<ERPState>('/api/erp',{cache:'no-store'}));},[]);
   useEffect(()=>{load().catch(error=>setNotice({text:error.message,error:true}));const params=new URLSearchParams(window.location.search);const value=params.get('module');if(nav.some(n=>n.id===value))setModule(value as Module);const theme=localStorage.getItem('bridge_theme')==='dark';setDark(theme);document.documentElement.dataset.theme=theme?'dark':'light';},[load]);
   useEffect(()=>{if(!notice)return;const timer=setTimeout(()=>setNotice(null),8000);return()=>clearTimeout(timer);},[notice]);
   async function mutate(action:string,params:Record<string,unknown>={}){
     if(busy)return;
     setBusy(action);
-    try {const r=await fetch('/api/erp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...params})});const body=await r.json();if(!r.ok)throw new Error(body.error);setState(body.state);setForm(null);setNotice({text:action==='sample'?'Örnek operasyon kayıtları eklendi. Stellar ödeme veya tahsilat verisi üretilmedi.':'İş kaydı güncellendi; bağlı modüller aynı veriyi kullanıyor.'});}catch(error){setNotice({text:error instanceof Error?error.message:'Kayıt tamamlanamadı.',error:true});}finally{setBusy('');}
+    try {const body=await fetchApiJson<{state:ERPState}>('/api/erp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...params})});setState(body.state);setForm(null);setNotice({text:action==='sample'?'Örnek operasyon kayıtları eklendi. Stellar ödeme veya tahsilat verisi üretilmedi.':'İş kaydı güncellendi; bağlı modüller aynı veriyi kullanıyor.'});}catch(error){setNotice({text:error instanceof Error?error.message:'Kayıt tamamlanamadı.',error:true});}finally{setBusy('');}
   }
   function remove(kind:'contact'|'product'|'employee'|'sales'|'purchase'|'production',id:string,label:string){
     const question=document.documentElement.lang==='en'?`Are you sure you want to delete ${label}?`:label+' kaydını silmek istediğinize emin misiniz?';

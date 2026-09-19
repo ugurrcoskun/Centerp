@@ -1,5 +1,5 @@
 import {createHash, randomBytes} from 'node:crypto';
-import {readFileSync, writeFileSync, mkdirSync} from 'node:fs';
+import {existsSync, readFileSync, writeFileSync, mkdirSync} from 'node:fs';
 import {Address, Asset, Keypair, Operation, rpc, scValToNative, TransactionBuilder, xdr} from '@stellar/stellar-sdk';
 import {STELLAR} from '../lib/config';
 
@@ -40,7 +40,15 @@ async function main() {
   mkdirSync('artifacts', {recursive: true});
   const proof = {network: 'TESTNET', protocol: 28, contractId, token, issuer: STELLAR.issuer, wasmSha256: wasmHash.toString('hex'), uploadHash: upload.txHash, deploymentHash: deploy.txHash, deployedAt: new Date().toISOString()};
   writeFileSync('artifacts/deployment.json', JSON.stringify(proof, null, 2) + '\n');
-  writeFileSync('.env.local', `NEXT_PUBLIC_STELLAR_NETWORK=TESTNET\nNEXT_PUBLIC_ESCROW_CONTRACT_ID=${contractId}\nDATABASE_PATH=./data/bridge.sqlite\nAPP_ORIGIN=http://127.0.0.1:3000\n`);
+  const envPath = '.env.local';
+  let envFile = existsSync(envPath) ? readFileSync(envPath, 'utf8') : '';
+  for (const [name, value] of [['NEXT_PUBLIC_STELLAR_NETWORK', 'TESTNET'], ['NEXT_PUBLIC_ESCROW_CONTRACT_ID', contractId]]) {
+    const line = `${name}=${value}`;
+    const pattern = new RegExp(`^${name}=.*$`, 'm');
+    envFile = pattern.test(envFile) ? envFile.replace(pattern, line) : `${envFile.trimEnd()}${envFile.trim() ? '\n' : ''}${line}\n`;
+  }
+  // Never erase Vercel/Neon credentials or unrelated local settings during deployment.
+  writeFileSync(envPath, envFile);
   console.log(JSON.stringify(proof, null, 2));
 }
 main().catch(error => {console.error(error instanceof Error ? error.message : 'Deployment error'); process.exitCode = 1;});

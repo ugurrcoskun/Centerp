@@ -55,12 +55,14 @@ export function openERP(request: Request) {
     let company: Company | null = null;
     try {company = erpCompany(request);} catch {}
     if (company) {
+      let dirty = false;
       if (!process.env.ERP_DISABLE_DEFAULT_SEED && company.demoVersion !== 3) {
         company = putRecord('erp_company', company.id, company.id, {...company, demo: true});
         mutateERP(request, {action: 'sample'});
         company = record<Company>('erp_company', company.id);
+        dirty = true;
       }
-      return {company, token: null};
+      return {company, token: null, dirty};
     }
   }
   const opened = transaction(() => {
@@ -68,7 +70,7 @@ export function openERP(request: Request) {
     putRecord('erp_company', company.id, company.id, company);
     const fresh = randomBytes(48).toString('hex');
     putRecord('erp_session', hashToken(fresh), company.id, {companyId: company.id, expires: Date.now() + 30 * 86400000});
-    return {company, token: fresh};
+    return {company, token: fresh, dirty: true};
   });
   if (!process.env.ERP_DISABLE_DEFAULT_SEED) {
     const seededRequest = new Request(request.url, {headers: {cookie: ERP_COOKIE + '=' + opened.token}});

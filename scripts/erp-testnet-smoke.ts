@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {Keypair,TransactionBuilder} from '@stellar/stellar-sdk';
 import {STELLAR} from '../lib/config';
+import {readApiJson} from '../lib/client-api';
 import type {AnchorTransfer,BridgeState,ChainOperation,Invoice} from '../lib/types';
 import type {Company,Contact,Employee,ERPState,Payable,Product,ProductionJob,PurchaseOrder,SalesOrder} from '../lib/erp-types';
 const origin=process.env.APP_ORIGIN||'http://127.0.0.1:3000';
@@ -12,9 +13,9 @@ class TestActor {
   remember(response:Response){for(const cookie of response.headers.getSetCookie()){const pair=cookie.split(';')[0];const index=pair.indexOf('=');this.cookies.set(pair.slice(0,index),pair.slice(index+1));}}
   async post<T>(action:string,params:Record<string,unknown>={},erp=false):Promise<T>{
     const r=await fetch(origin+(erp?'/api/erp':'/api/bridge'),{method:'POST',headers:{'Content-Type':'application/json',Origin:origin,Cookie:this.header()},body:JSON.stringify({action,...params})});
-    this.remember(r);const body=await r.json();if(!r.ok)throw new Error(action+': '+body.error);return (erp?body.result:body) as T;
+    this.remember(r);const body=await readApiJson<Record<string,unknown>>(r,action+': sunucu yanıtı eksik.');return (erp?body.result:body) as T;
   }
-  async get<T>(erp=false):Promise<T>{const r=await fetch(origin+(erp?'/api/erp':'/api/bridge'),{headers:{Cookie:this.header()}});this.remember(r);const body=await r.json();if(!r.ok)throw new Error(body.error);return body as T;}
+  async get<T>(erp=false):Promise<T>{const r=await fetch(origin+(erp?'/api/erp':'/api/bridge'),{headers:{Cookie:this.header()}});this.remember(r);return readApiJson<T>(r);}
   sign(xdr:string){const tx=TransactionBuilder.fromXDR(xdr,STELLAR.passphrase);tx.sign(this.key);return tx.toXDR();}
   async login(){const auth=await this.post<{id:string;xdr:string}>('challenge',{account:this.key.publicKey()});await this.post('session',{id:auth.id,signedXdr:this.sign(auth.xdr)});}
   async operation(kind:string,invoiceId?:string,payableId?:string){

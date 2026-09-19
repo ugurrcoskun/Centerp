@@ -27,6 +27,8 @@ test('a public key alone does not establish a session; signatures and replay che
   valid.sign(signer);
   const session = createSession(proof.id, valid.toXDR());
   assert.equal(accountFromRequest(new Request('http://localhost:3000', {headers: {Cookie: `bridge_session=${session.token}`}})), signer.publicKey());
+  const forged = Buffer.from(JSON.stringify({account: signer.publicKey(), xdr: valid.toXDR()})).toString('base64url');
+  assert.equal(accountFromRequest(new Request('http://localhost:3000', {headers: {Cookie: `bridge_session=${forged}`}})), null);
   assert.throws(() => createSession(proof.id, valid.toXDR()));
   assert.equal(accountFromRequest(new Request('http://localhost:3000', {headers: {Cookie: 'bridge_session=made-up'}})), null);
 });

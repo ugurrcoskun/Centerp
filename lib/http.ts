@@ -6,3 +6,12 @@ export async function fetchJson<T = Record<string, unknown>>(url: string, init?:
   if (!response.ok) throw new Error(String(body.error || body.detail || body.message || `Servis hatası: ${response.status}`));
   return body as T;
 }
+
+export function parseRequestJson(raw: string): unknown {
+  if (!raw.trim()) throw new Error('İstek verisi eksik. Sayfayı yenileyip tekrar deneyin.');
+  try {
+    return JSON.parse(raw) as unknown;
+  } catch {
+    throw new Error('İstek verisi geçersiz. Sayfayı yenileyip tekrar deneyin.');
+  }
+}

@@ -7,12 +7,12 @@ async function main() {
   const {db, hydrateDatabase, persistDatabase, records} = await import('../lib/db');
   const {openERP} = await import('../lib/erp');
 
-  await hydrateDatabase();
+  const revision = await hydrateDatabase();
   if (records('erp_company').length) {
     console.log('Neon already contains Centerp records; seed skipped.');
   } else {
     openERP(new Request('https://centerp.local/api/erp'));
-    await persistDatabase();
+    await persistDatabase(revision);
     console.log('Seeded Comuchain mock workspace in Neon.');
   }
   db().close();

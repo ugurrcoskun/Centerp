@@ -39,7 +39,14 @@ export async function anchorLogin(account: string, signedXdr: string) {
   if (parsed.clientAccountID !== account) throw new Error('Anchor talebi farklı bir cüzdana ait.');
   WebAuth.verifyChallengeTxSigners(signedXdr, STELLAR.anchorSigner, STELLAR.passphrase, [account], STELLAR.homeDomain, STELLAR.homeDomain);
   const result = await fetchJson<{token: string}>(`${STELLAR.anchor}/auth`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({transaction: signedXdr})});
-  const payload = JSON.parse(Buffer.from(result.token.split('.')[1], 'base64url').toString()) as {exp?: number};
+  let payload: {exp?: number};
+  try {
+    const encodedPayload = result.token.split('.')[1];
+    if (!encodedPayload) throw new Error();
+    payload = JSON.parse(Buffer.from(encodedPayload, 'base64url').toString()) as {exp?: number};
+  } catch {
+    throw new Error('Anchor geçerli bir oturum anahtarı döndürmedi. Yeniden bağlanın.');
+  }
   db().prepare('INSERT INTO anchor_tokens VALUES(?,?,?) ON CONFLICT(account) DO UPDATE SET token=excluded.token, expires=excluded.expires').run(account, result.token, (payload.exp || Date.now() / 1000 + 300) * 1000);
   return {authenticated: true};
 }
@@ -56,7 +63,7 @@ export async function requestQuote(account: string, kind: 'deposit' | 'withdraw'
   putRecord('quote', quote.id, account, {...quote, account, kind});
   return quote;
 }
-export async function startTransfer(account: string, kind: 'deposit' | 'withdraw', value: string, quoteId?: string, invoiceId?: string) {
+export async function startTransfer(account: string, kind: 'deposit' | 'withdraw', value: string, quoteId?: string, invoiceId?: string, erp?: {companyId: string; payableId: string}) {
   const canonical = amount(value, kind === 'deposit' ? 2 : 7);
   if (kind === 'deposit' && (Number(canonical) < 50 || Number(canonical) > 3000)) throw new Error('Mock Anchor için 50–3.000 TRY aralığında bir tutar girin.');
   if (kind === 'withdraw' && Number(canonical) < 1) throw new Error('Çekim tutarı en az 1 USDC olmalı.');
@@ -72,7 +79,7 @@ export async function startTransfer(account: string, kind: 'deposit' | 'withdraw
   } else params.set('asset_code', 'USDC');
   const result = await anchorRequest<{id: string; [key: string]: unknown}>(account, `/sep6/${endpoint}?${params}`);
   if (!result.id) throw new Error('Anchor işlem ID’si döndürmedi. İşlemi kontrol etmeden yeniden başlatmayın.');
-  const transfer: AnchorTransfer = {id: result.id, account, kind, amount: canonical, quoteId, invoiceId, createdAt: Date.now(), status: kind === 'deposit' ? 'pending_user_transfer_start' : 'pending_user_transfer_start', details: result};
+  const transfer: AnchorTransfer = {id: result.id, account, kind, amount: canonical, quoteId, invoiceId, erpCompanyId: erp?.companyId, erpPayableId: erp?.payableId, createdAt: Date.now(), status: 'pending_user_transfer_start', details: result};
   return putRecord('anchor', result.id, account, transfer);
 }
 export async function refreshTransfer(account: string, id: string) {

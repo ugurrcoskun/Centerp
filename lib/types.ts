@@ -8,6 +8,7 @@ export interface Invoice {
 }
 export interface AnchorTransfer {
   id: string; account: string; kind: 'deposit' | 'withdraw'; invoiceId?: string;
+  erpCompanyId?: string; erpPayableId?: string;
   status: string; amount: string; quoteId?: string; createdAt: number;
   details: Record<string, unknown>; hash?: string;
 }

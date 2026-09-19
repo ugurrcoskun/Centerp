@@ -7,6 +7,8 @@ import {Keypair, TransactionBuilder} from '@stellar/stellar-sdk';
 import {challenge, createSession} from '../lib/auth';
 import {STELLAR} from '../lib/config';
 import {attachInvoice, erpState, mutateERP, openERP, orderForInvoice, payableForPayment, settlePayable, syncERPInvoice} from '../lib/erp';
+import {putRecord} from '../lib/db';
+import {linkedAnchorPaymentAmount} from '../lib/stellar';
 import type {Company, Contact, Employee, ERPState, Product, ProductionJob, PurchaseOrder, SalesOrder} from '../lib/erp-types';
 import type {Invoice} from '../lib/types';
 
@@ -156,6 +158,17 @@ test('payable settlement requires company wallet, recipient key and an immutable
   assert.equal(snapshot(w).payables[0].status,'paid');
   assert.throws(()=>payableForPayment(w.company.id,payable.id,w.key.publicKey()),/zaten ödendi/);
   assert.throws(()=>settlePayable(w.company.id,payable.id,'different-hash'));
+});
+
+test('TRY-linked ERP payments use the Anchor quote USDC output, never the TRY face value',()=>{
+  const w=bind(workspace());const recipient=Keypair.random();const vendor=contact(w,'vendor',recipient.publicKey());const item=product(w,'TRY-LINK',0);
+  const purchase=w.change('purchase',{contactId:vendor.id,lines:[{productId:item.id,quantity:1,unitPrice:'2850'}]}) as PurchaseOrder;
+  w.change('receive',{id:purchase.id});
+  const payable=snapshot(w).payables[0];
+  putRecord('quote','quote-try',w.key.publicKey(),{account:w.key.publicKey(),buy_amount:'58.1730000'});
+  putRecord('anchor','anchor-try',w.key.publicKey(),{id:'anchor-try',account:w.key.publicKey(),kind:'deposit',status:'completed',amount:'2850.00',quoteId:'quote-try',erpCompanyId:w.company.id,erpPayableId:payable.id,createdAt:Date.now(),details:{}});
+  assert.equal(linkedAnchorPaymentAmount(w.key.publicKey(),w.company.id,payable.id,'anchor-try'),'58.1730000');
+  assert.throws(()=>linkedAnchorPaymentAmount(w.key.publicKey(),w.company.id,'wrong-payable','anchor-try'),/eşleşmiyor/);
 });
 
 test('escrow refund reverses revenue and receivables once without restoring shipped stock',()=>{

@@ -1,66 +1,58 @@
+import {createHash, randomBytes} from 'node:crypto';
 import {Keypair, StrKey, Transaction, TransactionBuilder, WebAuth} from '@stellar/stellar-sdk';
+import {deleteRecord, putRecord, record} from './db';
 import {STELLAR} from './config';
 
-const globalAuth = globalThis as unknown as {bridgeAuthKey?: Keypair; usedChallenges?: Set<string>};
+const globalAuth = globalThis as unknown as {bridgeAuthKey?: Keypair};
 const key = () => globalAuth.bridgeAuthKey ||= Keypair.random();
-const usedChallenges = () => globalAuth.usedChallenges ||= new Set<string>();
 export const COOKIE = 'bridge_session';
-type AuthProof = {account: string; xdr: string};
-
-function encodeProof(value: AuthProof) {
-  return Buffer.from(JSON.stringify(value)).toString('base64url');
-}
-function decodeProof(value: string | undefined): AuthProof | null {
-  if (!value || value.length > 16000) return null;
-  try {
-    const parsed = JSON.parse(Buffer.from(value, 'base64url').toString('utf8')) as Partial<AuthProof>;
-    if (typeof parsed.account !== 'string' || typeof parsed.xdr !== 'string' || parsed.xdr.length > 12000) return null;
-    return {account: publicKey(parsed.account), xdr: parsed.xdr};
-  } catch { return null; }
-}
+type AuthChallenge = {account: string; xdr: string; expires: number};
+type AuthSession = {account: string; expires: number};
+const tokenHash = (value: string) => createHash('sha256').update(value).digest('hex');
 
 export function publicKey(value: unknown): string {
   if (typeof value !== 'string' || !StrKey.isValidEd25519PublicKey(value)) throw new Error('Geçerli bir Stellar public key girin (G…).');
   return value;
 }
 export function challenge(account: string, domain: string) {
-  const xdr = WebAuth.buildChallengeTx(key(), publicKey(account), domain, 300, STELLAR.passphrase, domain);
-  // The challenge carries its expected account and XDR. It is therefore safe to
-  // verify after a Vercel function instance changes, without temporary storage.
-  return {id: encodeProof({account, xdr}), xdr};
+  const verifiedAccount = publicKey(account);
+  const xdr = WebAuth.buildChallengeTx(key(), verifiedAccount, domain, 300, STELLAR.passphrase, domain);
+  const id = randomBytes(32).toString('hex');
+  putRecord('auth_challenge', id, verifiedAccount, {account: verifiedAccount, xdr, expires: Date.now() + 300000} satisfies AuthChallenge);
+  return {id, xdr};
 }
 export function assertSignature(tx: Transaction, account: string) {
   const signer = Keypair.fromPublicKey(account);
   if (!tx.signatures.some(signature => signer.verify(tx.hash(), signature.signature))) throw new Error('Cüzdan imzası geçersiz.');
 }
 export function createSession(id: string, signedXdr: string) {
-  const item = decodeProof(id);
-  if (!item) throw new Error('Oturum talebi geçersiz. Yeniden bağlanın.');
-  if (usedChallenges().has(id)) throw new Error('Oturum talebi zaten kullanılmış.');
+  let item: AuthChallenge;
+  try { item = record<AuthChallenge>('auth_challenge', id); }
+  catch { throw new Error('Oturum talebi geçersiz veya zaten kullanılmış. Yeniden bağlanın.'); }
+  if (item.expires < Date.now()) {deleteRecord('auth_challenge', id); throw new Error('Oturum talebinin süresi doldu. Yeniden bağlanın.');}
   const expected = TransactionBuilder.fromXDR(item.xdr, STELLAR.passphrase);
   const signed = TransactionBuilder.fromXDR(signedXdr, STELLAR.passphrase);
   if (!(signed instanceof Transaction) || !Buffer.from(expected.hash()).equals(Buffer.from(signed.hash()))) throw new Error('İmzalanan oturum talebi değiştirildi.');
   assertSignature(signed, item.account);
-  usedChallenges().add(id);
-  if (usedChallenges().size > 2048) usedChallenges().clear();
-  return {token: encodeProof({account: item.account, xdr: signedXdr}), account: item.account};
+  deleteRecord('auth_challenge', id);
+  const token = randomBytes(48).toString('base64url');
+  putRecord('auth_session', tokenHash(token), item.account, {account: item.account, expires: Date.now() + 43200000} satisfies AuthSession);
+  return {token, account: item.account};
 }
 function sessionToken(request: Request) {
   return request.headers.get('cookie')?.split(';').map(c => c.trim()).find(c => c.startsWith(`${COOKIE}=`))?.slice(COOKIE.length + 1);
 }
 export function accountFromRequest(request: Request): string | null {
-  const proof = decodeProof(sessionToken(request));
-  if (!proof) return null;
+  const token = sessionToken(request);
+  if (!token || token.length > 128) return null;
   try {
-    const signed = TransactionBuilder.fromXDR(proof.xdr, STELLAR.passphrase);
-    if (!(signed instanceof Transaction)) return null;
-    assertSignature(signed, proof.account);
-    return proof.account;
+    const session = record<AuthSession>('auth_session', tokenHash(token));
+    return session.expires >= Date.now() ? publicKey(session.account) : null;
   } catch { return null; }
 }
 export function logout(request: Request) {
-  // The signed proof is held only in the HttpOnly cookie, which the logout
-  // endpoint clears in its response.
+  const token = sessionToken(request);
+  if (token && token.length <= 128) deleteRecord('auth_session', tokenHash(token));
 }
 export function requireAccount(request: Request) {
   const account = accountFromRequest(request);

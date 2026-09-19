@@ -1,7 +1,7 @@
 import {randomUUID} from 'node:crypto';
 import {Address, Asset, Contract, Horizon, Memo, nativeToScVal, Operation, rpc, scValToNative, Transaction, TransactionBuilder} from '@stellar/stellar-sdk';
 import {STELLAR} from './config';
-import {units} from './amount';
+import {amount, units} from './amount';
 import {assertSignature} from './auth';
 import {payableForPayment, settlePayable, syncERPInvoice} from './erp';
 import {putRecord, record, records} from './db';
@@ -29,6 +29,14 @@ export function ownedInvoice(account: string, id: string) {
   if (invoice.merchant !== account && invoice.buyer !== account) throw new Error('Bu fatura cüzdanınıza ait değil.');
   return invoice;
 }
+export function linkedAnchorPaymentAmount(account: string, companyId: string, payableId: string, anchorId: string) {
+  const transfer = record<AnchorTransfer>('anchor', anchorId);
+  if (transfer.account !== account || transfer.kind !== 'deposit' || transfer.status !== 'completed' || transfer.erpCompanyId !== companyId || transfer.erpPayableId !== payableId || !transfer.quoteId)
+    throw new Error('Tamamlanmış TRY → USDC işlemi bu ERP ödemesiyle eşleşmiyor.');
+  const quote = record<{account: string; buy_amount: string}>('quote', transfer.quoteId);
+  if (quote.account !== account) throw new Error('Anchor kur teklifi bu cüzdana ait değil.');
+  return amount(quote.buy_amount);
+}
 export async function prepare(account: string, kind: string, invoiceId?: string, anchorId?: string, erp?: {companyId: string; payableId: string}): Promise<ChainOperation> {
   const source = await horizon.loadAccount(account);
   let builder = new TransactionBuilder(source, {fee: '100', networkPassphrase: STELLAR.passphrase});
@@ -40,7 +48,9 @@ export async function prepare(account: string, kind: string, invoiceId?: string,
     const {payable, destination} = payableForPayment(erp.companyId, erp.payableId, account);
     const previous = records<ChainOperation>('operation').find(op => op.erpPayableId === payable.id && op.status !== 'failed');
     if (previous) return previous;
-    builder = builder.addMemo(Memo.text(payable.code)).addOperation(Operation.payment({destination, asset: usdc, amount: payable.amount}));
+    let paymentAmount = payable.amount;
+    if (anchorId) paymentAmount = linkedAnchorPaymentAmount(account, erp.companyId, payable.id, anchorId);
+    builder = builder.addMemo(Memo.text(payable.code)).addOperation(Operation.payment({destination, asset: usdc, amount: paymentAmount}));
   } else if (kind === 'withdraw_payment') {
     if (!anchorId) throw new Error('Anchor işlem ID’si gerekli.');
     const transfer = record<AnchorTransfer>('anchor', anchorId);
@@ -128,7 +138,7 @@ async function markSuccess(operation: ChainOperation) {
     syncERPInvoice(invoice, operation.kind, operation.hash);
     putRecord('invoice', invoice.id, invoice.merchant, invoice);
   }
-  if (operation.anchorId) {
+  if (operation.anchorId && operation.kind === 'withdraw_payment') {
     const transfer = record<AnchorTransfer>('anchor', operation.anchorId);
     transfer.hash = operation.hash;
     transfer.status = 'pending_anchor';
