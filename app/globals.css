@@ -1263,3 +1263,19 @@ td { border-color: color-mix(in srgb, var(--border) 24%, transparent); }
   .erp-shell .workspace span { margin-top: 5px; font-size: 9px; }
   .erp-shell .workspace > svg { display: block; width: 19px; height: 19px; }
 }
+
+/* Keep the finance company switcher identical to the workspace identity button. */
+.sidebar .finance-workspace { position: relative; width: calc(100% - 8px); flex: 0 0 auto; min-height: 62px; margin: 27px 4px 30px; padding: 0 13px; gap: 10px; overflow: visible; border: 2px solid #f7f3ee; border-radius: 15px; background: #111216; box-shadow: 5px 5px 0 #d5203f; }
+.sidebar .finance-workspace .workspace-avatar { display: none; }
+.sidebar .finance-workspace > div:nth-child(2) { min-width: 0; flex: 1; padding: 13px 0 14px; }
+.sidebar .finance-workspace strong { color: #fff; font-size: 13px; font-weight: 900; line-height: 1.1; letter-spacing: -.35px; }
+.sidebar .finance-workspace span { display: block; margin-top: 5px; color: #aaa8ad; font-size: 8px; font-weight: 700; line-height: 1.2; letter-spacing: .7px; text-transform: uppercase; }
+.sidebar .finance-workspace > svg { display: block; order: -1; align-self: center; width: 22px; height: 22px; flex: 0 0 22px; margin: 0; padding: 0; background: transparent; color: #fff; }
+
+@media (max-width: 1000px) and (min-width: 801px) {
+  .sidebar .finance-workspace { min-height: 56px; margin: 22px 0 23px; padding: 0 9px; gap: 8px; border-radius: 12px; box-shadow: 4px 4px 0 #d5203f; }
+  .sidebar .finance-workspace > div:nth-child(2) { padding: 11px 0; }
+  .sidebar .finance-workspace > svg { width: 19px; height: 19px; flex-basis: 19px; }
+  .sidebar .finance-workspace strong { font-size: 12px; }
+  .sidebar .finance-workspace span { margin-top: 5px; font-size: 9px; }
+}
