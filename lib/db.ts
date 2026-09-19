@@ -36,3 +36,6 @@ export function record<T>(kind: string, id: string): T {
 export function records<T>(kind: string): T[] {
   return (db().prepare('SELECT body FROM records WHERE kind=? ORDER BY rowid DESC').all(kind) as {body: string}[]).map(row => JSON.parse(row.body) as T);
 }
+export function deleteRecord(kind: string, id: string) {
+  db().prepare('DELETE FROM records WHERE kind=? AND id=?').run(kind, id);
+}

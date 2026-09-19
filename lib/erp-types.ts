@@ -1,4 +1,4 @@
-export interface Company {id: string; name: string; wallet: string | null; demo?: boolean; createdAt: number}
+export interface Company {id: string; name: string; wallet: string | null; demo?: boolean; demoVersion?: number; createdAt: number}
 export interface Contact {id: string; companyId: string; type: 'customer' | 'vendor'; name: string; email: string; wallet: string; createdAt: number}
 export interface Product {id: string; companyId: string; sku: string; name: string; type: 'raw' | 'finished'; quantity: number; reorderPoint: number; price: string; createdAt: number}
 export interface OrderLine {productId: string; name: string; quantity: number; unitPrice: string; total: string}

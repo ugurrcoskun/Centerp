@@ -1,6 +1,7 @@
 import type {Metadata} from 'next';
 import './globals.css';
-export const metadata: Metadata = {title: 'Centerp — İşletmen, bir arada', description: 'Satış, satın alma, stok, üretim, personel ve finans kayıtlarını Stellar Testnet ödemeleriyle birleştiren ERP prototipi.'};
+import LanguageProvider from '@/components/language-provider';
+export const metadata: Metadata = {title: 'Centerp — Your business, connected', description: 'An ERP prototype connecting sales, purchasing, inventory, production, people and finance records with Stellar Testnet payments.'};
 export default function RootLayout({children}: Readonly<{children: React.ReactNode}>) {
-  return <html lang="tr"><body>{children}</body></html>;
+  return <html lang="en"><body><LanguageProvider>{children}</LanguageProvider></body></html>;
 }

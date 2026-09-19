@@ -11,6 +11,7 @@ import type {Company, Contact, Employee, ERPState, Product, ProductionJob, Purch
 import type {Invoice} from '../lib/types';
 
 process.env.DATABASE_PATH=join(mkdtempSync(join(tmpdir(),'stellar-erp-tests-')),'erp.sqlite');
+process.env.ERP_DISABLE_DEFAULT_SEED='1';
 function workspace() {
   const opened=openERP(new Request('http://localhost:3000/api/erp'));
   const request=new Request('http://localhost:3000/api/erp',{headers:{Cookie:'erp_workspace='+opened.token}});
@@ -75,6 +76,54 @@ test('employee period liabilities are unique and retain the original amount snap
   assert.equal(snapshot(w).payables[0].amount,'0.5000000');
   w.change('payroll',{period:'2026-10'});
   assert.equal(snapshot(w).payables.length,2);
+});
+test('sample workspace fills core modules and can be completed again without duplicates',()=>{
+  const w=workspace();
+  w.change('sample');
+  const first=snapshot(w);
+  assert.equal(first.contacts.length,6);
+  assert.equal(first.products.length,7);
+  assert.equal(first.employees.length,5);
+  assert.equal(first.sales.length,3);
+  assert.equal(first.purchases.length,3);
+  assert.equal(first.production.filter(job=>job.status==='planned').length,1);
+  assert.equal(first.payables.filter(row=>row.type==='vendor').length,2);
+  assert.equal(first.payables.filter(row=>row.type==='salary').length,5);
+  const counts=[first.contacts.length,first.products.length,first.employees.length,first.sales.length,first.purchases.length,first.production.length,first.payables.length,first.movements.length,first.journal.length];
+  w.change('sample');
+  const second=snapshot(w);
+  assert.deepEqual([second.contacts.length,second.products.length,second.employees.length,second.sales.length,second.purchases.length,second.production.length,second.payables.length,second.movements.length,second.journal.length],counts);
+});
+test('new workspaces receive sample records by default while deleted records stay deleted',()=>{
+  delete process.env.ERP_DISABLE_DEFAULT_SEED;
+  const w=workspace();
+  process.env.ERP_DISABLE_DEFAULT_SEED='1';
+  const initial=snapshot(w);
+  assert.equal(initial.contacts.length,6);
+  assert.equal(initial.products.length,7);
+  assert.equal(initial.employees.length,5);
+  const employee=initial.employees[0];
+  w.change('delete',{kind:'employee',id:employee.id});
+  assert.equal(snapshot(w).employees.length,4);
+  openERP(w.request);
+  assert.equal(snapshot(w).employees.length,4);
+});
+test('record deletion protects dependencies and removes editable workflow records',()=>{
+  const w=workspace();w.change('sample');
+  const first=snapshot(w);
+  const sale=first.sales.find(row=>row.contactId===first.contacts.find(contact=>contact.name.startsWith('Nova'))?.id)!;
+  assert.throws(()=>w.change('delete',{kind:'contact',id:sale.contactId}),/bağlı siparişleri/);
+  w.change('delete',{kind:'sales',id:sale.id});
+  w.change('delete',{kind:'contact',id:sale.contactId});
+  const ordered=snapshot(w).purchases.find(row=>row.status==='ordered')!;
+  w.change('delete',{kind:'purchase',id:ordered.id});
+  const planned=snapshot(w).production.find(row=>row.status==='planned')!;
+  w.change('delete',{kind:'production',id:planned.id});
+  const state=snapshot(w);
+  assert.equal(state.sales.length,2);
+  assert.equal(state.contacts.length,5);
+  assert.equal(state.purchases.filter(row=>row.status==='ordered').length,0);
+  assert.equal(state.production.filter(row=>row.status==='planned').length,0);
 });
 test('sales totals bind to company wallet and journals transition only with verified invoice events',()=>{
   const w=bind(workspace());const buyer=Keypair.random();const customer=contact(w,'customer',buyer.publicKey());const item=product(w,'FINISHED',3);

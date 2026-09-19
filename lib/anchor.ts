@@ -8,7 +8,8 @@ import type {AnchorTransfer} from './types';
 export async function discoverAnchor() {
   const toml = await StellarToml.Resolver.resolve(STELLAR.homeDomain);
   if (toml.NETWORK_PASSPHRASE !== STELLAR.passphrase || toml.SIGNING_KEY !== STELLAR.anchorSigner
-    || toml.WEB_AUTH_ENDPOINT !== `${STELLAR.anchor}/auth` || toml.TRANSFER_SERVER !== `${STELLAR.anchor}/sep6`)
+    || toml.WEB_AUTH_ENDPOINT !== `${STELLAR.anchor}/auth` || toml.TRANSFER_SERVER !== `${STELLAR.anchor}/sep6`
+    || toml.ANCHOR_QUOTE_SERVER !== `${STELLAR.anchor}/sep38`)
     throw new Error('Anchor keşif değerleri beklenen Testnet yapılandırmasıyla eşleşmiyor.');
   const currencies = toml.CURRENCIES as {code: string; issuer: string}[] | undefined;
   if (!currencies?.some(asset => asset.code === STELLAR.assetCode && asset.issuer === STELLAR.issuer)) throw new Error('Anchor USDC issuer bilgisi eşleşmiyor.');
