@@ -1,13 +1,18 @@
 import {DatabaseSync} from 'node:sqlite';
 import {mkdirSync} from 'node:fs';
 import {dirname, resolve} from 'node:path';
+import {neon} from '@neondatabase/serverless';
 
 const globals = globalThis as unknown as {bridgeDb?: DatabaseSync};
+// Local development keeps its own SQLite file. Vercel Functions use Neon so a
+// cold start cannot discard ERP, invoice, or mock data.
+const remoteDatabaseUrl = () => (process.env.VERCEL || process.env.USE_NEON === 'true') ? process.env.DATABASE_URL : undefined;
+type StoredRow = {namespace: string; record_key: string; value: string};
 export function db() {
   if (!globals.bridgeDb) {
     const isVercel = !!process.env.VERCEL;
     const configured = process.env.DATABASE_PATH;
-    const path = configured === ':memory:'
+    const path = configured === ':memory:' || (isVercel && remoteDatabaseUrl())
       ? ':memory:'
       : resolve(configured || (isVercel ? '/tmp/bridge.sqlite' : './data/bridge.sqlite'));
     if (path !== ':memory:') {
@@ -23,6 +28,56 @@ export function db() {
     globals.bridgeDb = database;
   }
   return globals.bridgeDb;
+}
+
+function localRows() {
+  const database = db();
+  const records = database.prepare('SELECT kind, id, account, body FROM records').all() as {kind: string; id: string; account: string; body: string}[];
+  return [
+    ...records.map(row => ({namespace: 'record', record_key: `${row.kind}:${row.id}`, value: JSON.stringify(row)})),
+  ];
+}
+
+async function remoteStore() {
+  const url = remoteDatabaseUrl();
+  if (!url) return null;
+  const sql = neon(url);
+  await sql`CREATE TABLE IF NOT EXISTS centerp_store (namespace TEXT NOT NULL, record_key TEXT NOT NULL, value TEXT NOT NULL, PRIMARY KEY(namespace, record_key))`;
+  return sql;
+}
+
+/** Load the durable Neon snapshot before a server request reads application state. */
+export async function hydrateDatabase() {
+  const sql = await remoteStore();
+  if (!sql) return;
+  const remoteRows = await sql`SELECT namespace, record_key, value FROM centerp_store` as StoredRow[];
+  if (!remoteRows.length) {
+    const seed = localRows();
+    if (seed.length) await persistDatabase();
+    return;
+  }
+  const database = db();
+  database.exec('BEGIN IMMEDIATE');
+  try {
+    // Anchor access tokens intentionally stay process-local. They are short-lived
+    // bearer credentials, so a cold start requires a fresh SEP-10 signature.
+    database.exec('DELETE FROM records;');
+    const insertRecord = database.prepare('INSERT INTO records(kind,id,account,body) VALUES (?,?,?,?)');
+    for (const row of remoteRows) {
+      const value = JSON.parse(row.value) as Record<string, unknown>;
+      if (row.namespace === 'record') insertRecord.run(String(value.kind), String(value.id), String(value.account), String(value.body));
+    }
+    database.exec('COMMIT');
+  } catch (error) { database.exec('ROLLBACK'); throw error; }
+}
+
+/** Persist every mutable application record after a successful API response. */
+export async function persistDatabase() {
+  const sql = await remoteStore();
+  if (!sql) return;
+  const rows = localRows();
+  await sql`DELETE FROM centerp_store`;
+  for (const row of rows) await sql`INSERT INTO centerp_store(namespace, record_key, value) VALUES (${row.namespace}, ${row.record_key}, ${row.value})`;
 }
 export function putRecord<T>(kind: string, id: string, account: string, record: T) {
   db().prepare('INSERT INTO records(kind,id,account,body) VALUES (?,?,?,?) ON CONFLICT(kind,id) DO UPDATE SET body=excluded.body').run(kind, id, account, JSON.stringify(record));

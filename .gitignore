@@ -15,3 +15,5 @@ yarn-error.log*
 .vercel/
 .DS_Store
 positivus_landing_page.svg
+.vercel
+.env*.local

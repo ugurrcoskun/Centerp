@@ -12,10 +12,12 @@
     "contract:build": "sh scripts/toolchain.sh stellar contract build --manifest-path contracts/invoice-escrow/Cargo.toml",
     "test:integration": "node --import tsx scripts/testnet-smoke.ts",
     "contract:deploy": "node --import tsx scripts/deploy-testnet.ts",
-    "test:erp": "node --import tsx scripts/erp-testnet-smoke.ts"
+    "test:erp": "node --import tsx scripts/erp-testnet-smoke.ts",
+    "db:seed:neon": "node --import tsx scripts/seed-neon.ts"
   },
   "dependencies": {
     "@creit.tech/stellar-wallets-kit": "2.6.0",
+    "@neondatabase/serverless": "^1.1.0",
     "@phosphor-icons/react": "^2.1.10",
     "@radix-ui/react-slot": "1.3.3",
     "@stellar/freighter-api": "6.0.1",

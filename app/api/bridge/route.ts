@@ -6,14 +6,14 @@ import {anchorChallenge, anchorLogin, discoverAnchor, isAnchorAuthenticated, ref
 import {amount} from '@/lib/amount';
 import {attachInvoice, erpCompany, orderForInvoice, transaction} from '@/lib/erp';
 import {STELLAR} from '@/lib/config';
-import {putRecord, records} from '@/lib/db';
+import {hydrateDatabase, persistDatabase, putRecord, records} from '@/lib/db';
 import {fetchJson} from '@/lib/http';
 import {balances, contractId, ownedInvoice, pollOperation, prepare, submit} from '@/lib/stellar';
 import type {AnchorTransfer, ChainOperation, Invoice} from '@/lib/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-const reply = (value: unknown) => NextResponse.json(value, {headers: {'Cache-Control': 'no-store'}});
+const reply = async (value: unknown) => { await persistDatabase(); return NextResponse.json(value, {headers: {'Cache-Control': 'no-store'}}); };
 const string = z.string().min(1).max(20000);
 const idString = z.string().min(1).max(20000);
 const actions = z.discriminatedUnion('action', [
@@ -34,6 +34,7 @@ const actions = z.discriminatedUnion('action', [
 ]);
 export async function GET(request: Request) {
   try {
+    await hydrateDatabase();
     const account = accountFromRequest(request);
     const [wallet, health, discovery] = await Promise.allSettled([
       account ? balances(account) : Promise.resolve({xlm: '0', usdc: '0', trustline: false, funded: false}),
@@ -51,6 +52,7 @@ export async function GET(request: Request) {
 }
 export async function POST(request: Request) {
   try {
+    await hydrateDatabase();
     assertOrigin(request);
     if (Number(request.headers.get('content-length') || 0) > 100000) throw new Error('İstek çok büyük.');
     const raw = await request.text();
@@ -59,12 +61,12 @@ export async function POST(request: Request) {
     if (input.action === 'challenge') return reply(challenge(publicKey(input.account), new URL(request.url).host));
     if (input.action === 'session') {
       const session = createSession(input.id, input.signedXdr);
-      const response = reply({account: session.account});
+      const response = await reply({account: session.account});
       response.cookies.set(COOKIE, session.token, {httpOnly: true, sameSite: 'strict', secure: new URL(request.url).protocol === 'https:', path: '/', maxAge: 43200});
       return response;
     }
     if (input.action === 'logout') {
-      logout(request); const response = reply({ok: true}); response.cookies.delete(COOKIE); return response;
+      logout(request); const response = await reply({ok: true}); response.cookies.delete(COOKIE); return response;
     }
     const account = requireAccount(request);
     switch (input.action) {
