@@ -1,4 +1,4 @@
-> **19 Eylül 2026 kapsam düzeltmesi:** Ana ürün artık **Centerp** şirket çalışma alanıdır. Bu belge finans/Anchor/escrow modülünün teknik araştırmasıdır. Güncel ERP kapsamı için [CENTERP_PROJE_KAPSAMI.md](CENTERP_PROJE_KAPSAMI.md) dosyasına bakın.
+> **19 Eylül 2026 kapsam düzeltmesi:** Ana ürün artık **Centerp** şirket çalışma alanıdır. Bu belge finans/Anchor/escrow modülünün teknik araştırmasıdır. Güncel ERP kapsamı için [ürün kapsamı belgesine](project/product-scope.md) bakın.
 
 # Centerp — Stellar Araştırması ve Hackathon MVP Tasarımı
 

@@ -1234,3 +1234,32 @@ td { border-color: color-mix(in srgb, var(--border) 24%, transparent); }
   .payment-route-options { width: 100%; }
   .payment-route-options button { min-width: 0; }
 }
+
+/* Workspace sidebar identity */
+.erp-shell .sidebar { padding: 28px 18px 18px; }
+.erp-shell .brand { align-items: flex-start; gap: 13px; padding: 0 6px; }
+.erp-shell .brand-mark { width: 48px; height: 54px; flex: 0 0 auto; margin-top: 1px; border-radius: 0; transform: none; box-shadow: 4px 4px 0 #fff; }
+.erp-shell .brand-mark svg { transform: none; }
+.erp-shell .brand > span { display: block; min-width: 0; flex: 1; font-size: 30px; font-weight: 900; line-height: .95; letter-spacing: -1.8px; }
+.erp-shell .brand .brand-accent { color: #d5203f; }
+.erp-shell .brand small { display: block; max-width: 154px; margin-top: 8px; color: #8b8990; font-size: 7px; font-weight: 700; line-height: 1.35; letter-spacing: .85px; overflow-wrap: anywhere; }
+.erp-shell .workspace { position: relative; flex: 0 0 auto; min-height: 62px; margin: 27px 4px 30px; padding: 0 13px; gap: 10px; overflow: visible; border: 2px solid #f7f3ee; border-radius: 15px; background: #111216; box-shadow: 5px 5px 0 #d5203f; }
+.erp-shell .workspace::before { display: none; }
+.erp-shell .workspace-avatar { display: none; }
+.erp-shell .workspace > div:nth-child(2) { min-width: 0; flex: 1; padding: 13px 0 14px; }
+.erp-shell .workspace strong { color: #fff; font-size: 13px; font-weight: 900; line-height: 1.1; letter-spacing: -.35px; }
+.erp-shell .workspace span { display: block; margin-top: 5px; color: #aaa8ad; font-size: 8px; font-weight: 700; line-height: 1.2; letter-spacing: .7px; text-transform: uppercase; }
+.erp-shell .workspace > svg { display: block; order: -1; align-self: center; width: 22px; height: 22px; flex: 0 0 22px; margin: 0; padding: 0; background: transparent; color: #fff; }
+
+@media (max-width: 1000px) and (min-width: 801px) {
+  .erp-shell .brand { gap: 11px; padding: 0 4px; }
+  .erp-shell .brand-mark { width: 42px; height: 48px; box-shadow: 4px 4px 0 #fff; }
+  .erp-shell .brand > span { font-size: 27px; letter-spacing: -1.7px; }
+  .erp-shell .brand small { max-width: 132px; margin-top: 7px; font-size: 6px; letter-spacing: .6px; }
+  .erp-shell .workspace { min-height: 56px; margin: 22px 0 23px; padding: 0 9px; gap: 8px; border-radius: 12px; box-shadow: 4px 4px 0 #d5203f; }
+  .erp-shell .workspace > div:nth-child(2) { padding: 11px 0; }
+  .erp-shell .workspace > svg { width: 19px; height: 19px; flex-basis: 19px; padding: 0; }
+  .erp-shell .workspace strong { font-size: 12px; }
+  .erp-shell .workspace span { margin-top: 5px; font-size: 9px; }
+  .erp-shell .workspace > svg { display: block; width: 19px; height: 19px; }
+}
