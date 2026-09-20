@@ -35,6 +35,8 @@ This creates three recurring problems:
 | **Counterparty risk** | Buyers and sellers must trust each other before either delivery or payment is secured. |
 | **Slow, expensive settlement** | Legacy payment rails add waiting time, banking steps, fees and paperwork. |
 
+---
+
 ## The Centerp solution
 
 Centerp is a working ERP prototype where **the business event and its financial settlement share the same source record**.
@@ -299,9 +301,11 @@ docs/                        Product, architecture and research documentation
 public/presentation.mp4      108-second narrated walkthrough
 ```
 
+---
+
 ## Prototype scope
 
-Centerp is a hackathon MVP running on **Stellar Testnet**. The TRY bank transfer and KYC experience is simulated by the external TR Mock Anchor; no real TRY or Mainnet assets are used.
+Centerp is a hackathon MVP running on **Stellar Testnet**. The TRY bank-transfer experience is simulated by the external TR Mock Anchor; no real TRY or Mainnet assets are used.
 
 The accounting view is a management ledger for demonstrating source-linked reconciliation. It is not a statutory Turkish accounting, tax, payroll or e-invoicing system. Production deployment would additionally require organization membership and roles, recovery flows, audit logs, regulatory integrations, a production Anchor, background reconciliation workers and operational monitoring.
 
