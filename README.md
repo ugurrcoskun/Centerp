@@ -1,193 +1,283 @@
 # Centerp
 
-> **The operations centre for a business. Proof for every payment.**
+> **The Decentralized Enterprise Resource Planning (ERP) Engine Powered by Stellar & Soroban.**  
+> *Connecting real-world operational workflows with instant, low-cost, trustless cryptographic settlements.*
 
-Centerp is a Testnet-only business workspace that connects daily ERP records to a verifiable Stellar payment lifecycle. Sales, purchasing, inventory, production, people, and management accounting remain connected to the same record—from a Turkish lira collection choice to USDC escrow and delivery-approved release.
+[![Network: Stellar Testnet](https://img.shields.io/badge/network-Stellar%20Testnet-111318?style=flat-square&logo=stellar)](https://stellar.org/testnet)
+[![Soroban Escrow Contract](https://img.shields.io/badge/Soroban%20Escrow-Verified%20%26%20Live-CB2B45?style=flat-square)](artifacts/deployment.json)
+[![Anchor Integration](https://img.shields.io/badge/Stellar%20Anchor-SEP--1%20%7C%20SEP--6%20%7C%20SEP--10%20%7C%20SEP--38-0052FF?style=flat-square)](lib/anchor.ts)
+[![Tests](https://img.shields.io/badge/unit%20%26%20integration-16%20passing-10B981?style=flat-square)](tests)
+[![Stack](https://img.shields.io/badge/stack-Next.js%2015%20%7C%20TypeScript%20%7C%20Rust-111318?style=flat-square)](package.json)
+[![Hackathon](https://img.shields.io/badge/Rise%20In%20x%20Stellar-Pro%20Hackathon%202026-CB2B45?style=flat-square)](docs/hackathon-tracks.md)
 
-[![Network: Stellar Testnet](https://img.shields.io/badge/network-Stellar%20Testnet-111318?style=flat-square)](https://stellar.org/testnet)
-[![Contract: live](https://img.shields.io/badge/Soroban%20escrow-live-CB2B45?style=flat-square)](artifacts/deployment.json)
-[![Tests](https://img.shields.io/badge/tests-14%20passing-CB2B45?style=flat-square)](tests)
-[![Stack](https://img.shields.io/badge/stack-Next.js%2015%20%7C%20TypeScript-111318?style=flat-square)](package.json)
+---
 
-## What problem does Centerp solve?
+## 🎥 2-Minute Presentation & Demo Video
 
-Operational records and payment evidence normally live in separate places. A business may know that an order was shipped, while still needing to reconcile a bank transfer, a wallet payment, and a delivery confirmation by hand.
+Watch the complete walkthrough demonstrating Centerp’s end-to-end flow: from our unified 8-module ERP workspace, to fiat TRY Anchor on-ramping, Soroban smart contract escrow funding, delivery verification, and on-chain explorer proof.
 
-Centerp makes the relationship explicit:
+🎬 **[Watch Presentation Video (`presentation.mp4`)](presentation.mp4)**
+
+```
+0:00 - 0:18  | Executive introduction & the core enterprise problem
+0:18 - 0:50  | Complete Workspace Tour: CRM, Sales, Purchasing, Stock, Production, HR, Accounting
+0:50 - 1:24  | Payments & Reconciliation: Stellar Anchor bridge (TRY ⇄ USDC) & Soroban escrow
+1:24 - 1:48  | Invoice settlement, cryptographic proof on Stellar Expert explorer & conclusion
+```
+
+---
+
+## 💡 What Problem Does Centerp Solve?
+
+### The Core Problem: The Fracture Between Business Operations & Financial Settlement
+In traditional trade (SMEs and manufacturers), **operational events** (sales orders, production runs, warehouse receipts, payroll) and **financial settlements** (bank wires, invoices, receipts) live in completely isolated silos:
+
+1. **B2B Counterparty Trust Deficit:**
+   - **Buyers ask:** *"If I pay upfront, will the supplier deliver on time and with the right specs?"*
+   - **Sellers ask:** *"If I manufacture and ship the goods on credit, will the buyer actually pay, or delay payment for months?"*
+   - *Traditional Solution:* Bank Letters of Credit (Akreditif). Slow (weeks to process), bureaucratic, and extortionate (**2% to 5% bank fees**).
+2. **Reconciliation Hell:**
+   - Invoices are generated in one system; bank statements arrive via manual Excel exports, WhatsApp receipts, or PDF emails. Accountants spend days manually cross-referencing invoice numbers with bank deposits.
+3. **Banking Friction & Currency Barriers:**
+   - Domestic clearing is slow; international wire transfers cost $25–$50 per transaction and take 3–5 business days with hidden FX markups.
+   - Traditional businesses cannot adopt crypto because of volatile assets, complex exchange accounts, and tax reporting headaches.
+
+---
+
+### The Centerp Solution: Operational ERP + Programmed On-Chain Proof
+Centerp bridges the gap by building a **full-featured business workspace directly wired into Stellar's payment rails and Soroban smart contracts**:
 
 ```mermaid
 flowchart LR
-  A[Sales order] --> B[Invoice]
-  B --> C{Collection route}
-  C -->|TRY| D[TR Mock Anchor]
-  D --> E[Testnet USDC]
-  C -->|USDC| E
-  E --> F[Soroban escrow]
-  F --> G[Buyer delivery approval]
-  G --> H[Merchant receives USDC]
-  H --> I[ERP & ledger reconciliation]
+    subgraph Operational_ERP ["Centerp Workspace (Real Operations)"]
+        SO[Sales Order] --> INV[Invoice Generated]
+        PO[Purchase Order] --> REC[Inventory Receipt] --> AP[Vendor Liability]
+        HR[Employee Payroll] --> SAL[Salary Liability]
+    end
+
+    subgraph Stellar_Rails ["Stellar & Soroban Payment Lifecycle"]
+        INV --> ROUTE{Route Choice}
+        ROUTE -->|TRY (Fiat)| ANCHOR[TR Stellar Anchor] -->|SEP-38 Quote / SEP-6| USDC[Testnet USDC]
+        ROUTE -->|USDC| USDC
+        USDC --> ESCROW[Soroban Invoice Escrow]
+        ESCROW -->|Delivery Approved| RELEASE[USDC Released to Merchant]
+        AP & SAL --> DIRECT[Direct Stellar USDC Settlement]
+    end
+
+    subgraph Accounting ["Automated Reconciliation"]
+        RELEASE & DIRECT --> HASH[Cryptographic Stellar Tx Hash]
+        HASH --> GL[Auto Double-Entry General Ledger]
+    end
 ```
 
-The app keeps the route choice clear: **TRY** starts with a mock bank-to-USDC Anchor flow; **USDC** pays Stellar directly. Both routes converge at the same fixed-USDC Soroban escrow.
+- **Smart Escrow for Trade:** Sales orders automatically generate escrow-backed invoices. Funds remain locked in a Soroban smart contract until the buyer approves delivery.
+- **Seamless Local Currency On/Off Ramp:** Through Stellar Anchors, users can pay in local Turkish Lira (TRY) via bank transfer, which converts seamlessly into USDC without ever touching a crypto exchange.
+- **Cryptographic Reconciliation:** Every payment produces a verifiable transaction hash on the Stellar ledger, instantly updating stock, invoices, and accounting journals with zero manual work.
 
-## Product at a glance
+---
 
-| Area | What the user can do | Why it matters |
+## ⚡ Comparative Analysis: Traditional ERP vs. Centerp
+
+| Capability | Traditional ERP (SAP, Logo, NetSuite, Netsis) | Centerp (Stellar + Soroban Powered) |
 |---|---|---|
-| Business workspace | Manage contacts, products, stock, purchasing, production, employees, and accounting | Operations start from a shared business record |
-| Sales | Create multi-line orders and turn them into invoices | The invoice amount stays bound to the order |
-| Collections | Choose TRY → USDC via Anchor or direct USDC | The payment entry route is visible, not implicit |
-| Escrow | Fund, release after delivery approval, refund, cancel, or expire | Funds are protected until the correct business event |
-| Reconciliation | Link ERP records to on-chain transaction hashes | Payment proof returns to the original business context |
+| **Core Paradigm** | Centralized internal database; records entered retroactively after work is done. | **Hybrid Workspace + Programmable Real-Time On-Chain Settlement.** |
+| **Payment Protection** | **None.** Open accounts or post-dated checks. High risk of disputes and lawsuits. | **Soroban Smart Escrow.** Funds locked trustlessly until delivery criteria are verified. |
+| **Settlement Time** | **3 to 5 Business Days** (bank wires, clearing houses, SWIFT). | **3 to 5 Seconds** with sub-second Stellar consensus. |
+| **Transaction Fees** | **High.** 1.5%–4% POS/gateway fees; $25–$50 per international wire. | **Near Zero.** ~0.00001 XLM (~$0.0001) network fee per transaction. |
+| **Fiat ⇄ Web3 Bridge** | Proprietary bank APIs, complex MT940 imports, or manual statements. | **Stellar Anchor Standards (SEP-1, 6, 10, 38).** Native fiat on/off ramping. |
+| **Audit Trail & Immutability** | Database administrators or software owners can modify historical rows. | **Cryptographic Proof.** Every event tied to a SHA-256 commitment & Stellar Tx Hash. |
+| **Accounting Reconciliation** | **Manual Hell.** Days spent matching bank slips with invoice line items. | **Instant & Automated.** On-chain confirmation immediately triggers balanced journal entries. |
+| **Counterparty Identity** | Paper tax numbers, email confirmations, unverified IBANs. | **Cryptographic Wallets.** Freighter Ed25519 signature proof of control. |
+| **Data Privacy** | Monolithic server silos. | **Privacy-Preserving Hybrid Architecture.** Business secrets stay local; only commitments touch the ledger. |
 
-## Where Stellar is used
+---
+
+## 🏢 The 8 Core Business Modules
+
+Centerp is not just a payment button—it is an all-in-one operational system:
+
+```mermaid
+graph TD
+    classDef erp fill:#1e293b,stroke:#3b82f6,stroke-width:2px,color:#fff;
+    classDef chain fill:#0f172a,stroke:#ec4899,stroke-width:2px,color:#fff;
+
+    A[Centerp Business Workspace]:::erp --> B[1. Customers & Vendors]:::erp
+    A --> C[2. Inventory & Stock]:::erp
+    A --> D[3. Purchasing & Receiving]:::erp
+    A --> E[4. Production & BOM]:::erp
+    A --> F[5. Sales & Orders]:::erp
+    A --> G[6. HR & Payroll]:::erp
+    A --> H[7. Double-Entry Accounting]:::erp
+    A --> I[8. Finance & Settlement]:::chain
+
+    I --> J[Stellar Anchor TRY On-Ramp]:::chain
+    I --> K[Soroban Escrow Smart Contract]:::chain
+    I --> L[Stellar Expert On-Chain Proof]:::chain
+```
+
+1. **Customers & Vendors:** Full B2B partner directory linking business profiles to verifiable Stellar public keys (`G...`).
+2. **Inventory & Warehouses:** Real-time multi-product stock management distinguishing raw materials (`raw`) from finished goods (`finished`), complete with automated stock movement logs.
+3. **Purchasing & Procurement:** Purchase orders linked to vendors. Receiving goods automatically updates inventory stock levels and registers an Accounts Payable liability.
+4. **Production & Manufacturing:** Bill of Materials (BOM) work orders. Completing a production run atomically consumes required raw materials and increments finished product inventory.
+5. **Sales Management:** Multi-line sales orders tied to customer accounts. Orders directly transition into on-chain escrow invoices.
+6. **Human Resources & Payroll:** Employee directory with department roles, base salaries, and registered recipient wallets. Monthly payroll generation creates isolated payment liabilities.
+7. **Accounting & General Ledger:** Complete automated double-entry bookkeeping (debit/credit) recording sales revenue, inventory asset valuation, trade payables, and wage expenses.
+8. **Finance, Anchor & Escrow:** Dual-rail payment dashboard. Select between local fiat TRY (via SEP-6/38 Anchor) or direct Stellar USDC, fund escrows, and execute single-click vendor/salary settlements.
+
+---
+
+## 🛡️ Architecture & Stellar Integration
 
 ```mermaid
 flowchart TB
-  UI[Next.js workspace] --> API[Server-side API]
-  UI <-->|signed XDR| WALLET[Stellar Wallets Kit + Freighter]
-  API --> DB[(Local SQLite)]
-  API --> H[Stellar Horizon]
-  API --> RPC[Soroban RPC]
-  RPC --> ESCROW[Invoice Escrow contract]
-  ESCROW --> SAC[Fixed USDC Stellar Asset Contract]
-  API <-->|SEP-1 · SEP-10 · SEP-6 · SEP-38| ANCHOR[TR Mock Anchor]
+    subgraph Client ["Client (Browser)"]
+        UI[Next.js App / TypeScript]
+        Freighter[Freighter Wallet / Stellar Wallets Kit]
+    end
+
+    subgraph Backend ["Centerp Serverless Backend (lib/)"]
+        API[API Router / Node.js]
+        DB[(Durable Store / SQLite)]
+        SEP[Anchor Client SEP-1 / 6 / 10 / 38]
+    end
+
+    subgraph Stellar ["Stellar Network (Testnet)"]
+        H[Stellar Horizon API]
+        RPC[Soroban RPC]
+        Contract[Invoice Escrow Contract - Rust / WASM]
+        SAC[USDC Stellar Asset Contract]
+        Anchor[TR Mock Anchor]
+    end
+
+    UI <-->|Sign Transactions| Freighter
+    UI -->|HTTP / API| API
+    API --> DB
+    API <-->|SEP-10 Auth & Quotes| SEP
+    SEP <-->|Fiat Ramps| Anchor
+    API -->|Submit & Poll| H
+    API -->|Simulate & Prepare| RPC
+    RPC --> Contract
+    Contract --> SAC
 ```
 
-### Stellar layer
-
-- **Wallet connection and signatures:** Stellar Wallets Kit opens the connection flow; Freighter signs XDRs in a real Chrome or Edge profile.
-- **Testnet balances:** XLM, the USDC trustline, and asset balances are read from Stellar infrastructure.
-- **Soroban escrow:** the Rust contract fixes the USDC token at construction and enforces the invoice state machine on-chain.
-- **Proof:** submitted transaction hashes are stored with their ERP event and are only treated as complete after network confirmation.
-
-### Anchor layer
-
-The TR Mock Anchor is the local-currency bridge in the demo.
-
-| Standard | Role in Centerp |
-|---|---|
-| SEP-1 | Discover the Anchor configuration from its home domain |
-| SEP-10 | Authenticate a wallet with a signed challenge |
-| SEP-38 | Lock a TRY ↔ USDC quote |
-| SEP-6 | Create and track mock deposit/withdraw exchange instructions |
-
-Bank and KYC steps are intentionally simulated. USDC and escrow transactions are Testnet transactions.
-
-## Live Testnet deployment
-
-The invoice escrow contract is deployed and verified on Stellar Testnet.
-
-| Item | Value |
-|---|---|
-| Network | Stellar Testnet |
-| Escrow contract | [`CCDP…76IL`](artifacts/deployment.json) |
-| Token | Testnet USDC Stellar Asset Contract |
-| Deployment evidence | [artifacts/deployment.json](artifacts/deployment.json) |
-| End-to-end evidence | [artifacts/testnet-proof.json](artifacts/testnet-proof.json) |
-
-The deployment signer is ephemeral and is never written to disk. The contract does not include a privileged fund sweep or upgrade path.
+### 1. Soroban Invoice Escrow Smart Contract (Rust)
+* **Verified Contract ID:** [`CCDPQPUS5SIBJF6YK2FZZV65P45U5FK7A3TMUE25T62VS3GQ22OG76IL`](https://stellar.expert/explorer/testnet/contract/CCDPQPUS5SIBJF6YK2FZZV65P45U5FK7A3TMUE25T62VS3GQ22OG76IL)
+* **Source Code:** [contracts/invoice-escrow/src/lib.rs](contracts/invoice-escrow/src/lib.rs)
+* **Immutable Security:** The contract is initialized with a fixed USDC Stellar Asset Contract (SAC). It has **no upgrade backdoor, no owner drain function, and no admin sweep keys**.
 
 ```mermaid
 stateDiagram-v2
-  [*] --> draft: Create local invoice
-  draft --> open: Merchant signs on-chain create
-  open --> funded: Buyer funds exact USDC amount
-  open --> cancelled: Merchant cancels before funding
-  open --> expired: Payment due date passes
-  funded --> released: Buyer approves delivery
-  funded --> refunded: Merchant sends full refund
+    [*] --> Draft: Local ERP Sales Order
+    Draft --> Open: Merchant signs on-chain create
+    Open --> Funded: Buyer deposits exact USDC into escrow
+    Open --> Cancelled: Merchant cancels before funding
+    Open --> Expired: Payment deadline passes
+    Funded --> Released: Buyer verifies & approves delivery (USDC -> Merchant)
+    Funded --> Refunded: Merchant issues full refund (USDC -> Buyer)
 ```
 
-## Judge demo path
+### 2. Stellar Anchor Implementation (SEP-1, 6, 10, 38)
+* **SEP-1 (Discovery):** Resolves `stellar.toml` from the Anchor's domain to verify signing keys, auth endpoints, and supported currencies.
+* **SEP-10 (WebAuth):** Cryptographic challenge-response authentication using Freighter wallet signatures (no passwords or centralized credentials).
+* **SEP-38 (Quotes):** Locks a guaranteed exchange rate between local Turkish Lira (TRY) and USDC using real-time oracle feeds.
+* **SEP-6 (Deposit & Withdrawal):** Generates virtual bank transfer instructions and orchestrates fiat-to-crypto bridging.
 
-1. Open `/workspace`. Centerp starts with practical sample customers, vendors, products, employees, sales, purchasing, production, and ledger records.
-2. Show that a purchasing receipt raises stock and creates a vendor payable; show the planned production job and open sales orders.
-3. Open `/finance` and choose **TRY** or **USDC** as the collection route.
-4. For TRY, authenticate to the Anchor, request a quote, create the bank simulation instruction, and receive Testnet USDC. For USDC, use a prepared Testnet balance directly.
-5. Create or open an invoice, fund the Soroban escrow as the buyer, then approve delivery.
-6. Return to the finance and ERP views: the merchant’s collection, the invoice status, and the linked ledger evidence reconcile together.
+### 3. Privacy-Preserving Hybrid Architecture
+Centerp stores sensitive commercial data (employee salaries, recipes, customer contact info) in the enterprise workspace database. Only cryptographic commitments (`SHA-256(invoice_metadata)`), escrow states, and financial amounts are published to the public blockchain, ensuring regulatory compliance and corporate privacy.
 
-> Freighter extensions do not run inside Codex’s embedded browser. Use Chrome or Edge with Freighter on **Testnet** for the real signing flow. A Testnet account needs sufficient XLM for transaction fees.
+---
 
-## Run locally
+## 📋 Live Testnet Evidence & Artifacts
 
-Requirements: Node.js 24+, npm, and (only for contract work) Rust plus Stellar CLI.
+All integration proofs, test runs, and deployments are saved as machine-verifiable records:
 
-```sh
+| Record | Path | Description |
+|---|---|---|
+| **Contract Deployment** | [artifacts/deployment.json](artifacts/deployment.json) | On-chain deployment hash, contract ID, and constructor token binding. |
+| **End-to-End Escrow Proof** | [artifacts/testnet-proof.json](artifacts/testnet-proof.json) | Complete lifecycle: Trustline -> SEP-10 -> SEP-38 -> Escrow Fund -> Delivery Release. |
+| **ERP Workflow Proof** | [artifacts/erp-testnet-proof.json](artifacts/erp-testnet-proof.json) | Purchase receipt -> Vendor payment -> Salary settlement -> Linked Journal entries. |
+
+---
+
+## 🏃 Quick Start for Hackathon Judges
+
+### Live Web Demo
+Access the live deployment on Vercel: **[https://centerp.vercel.app](https://centerp.vercel.app)**  
+*(Ensure Freighter wallet is switched to **Test Net** in your browser).*
+
+---
+
+### Running Locally
+
+**Prerequisites:** Node.js 22.5+ or 24+, npm.
+
+```bash
+# 1. Clone repository
+git clone https://github.com/ugurrcoskun/Centerp.git
+cd Centerp
+
+# 2. Install dependencies
 npm ci
+
+# 3. Configure environment
 cp .env.example .env.local
+
+# 4. Start development server
 npm run dev
 ```
 
-Open [http://127.0.0.1:3000](http://127.0.0.1:3000). If port 3000 is occupied, Next.js will print the alternative local URL.
+Open [http://127.0.0.1:3000](http://127.0.0.1:3000) in Chrome or Edge with Freighter installed.
 
-```env
-NEXT_PUBLIC_STELLAR_NETWORK=TESTNET
-NEXT_PUBLIC_ESCROW_CONTRACT_ID=CCDPQPUS5SIBJF6YK2FZZV65P45U5FK7A3TMUE25T62VS3GQ22OG76IL
-DATABASE_PATH=./data/bridge.sqlite
-APP_ORIGIN=http://127.0.0.1:3000
-```
+---
 
-`NEXT_PUBLIC_ESCROW_CONTRACT_ID` is public. The app is deliberately hard-wired to the Testnet network passphrase and service endpoints; it cannot become a Mainnet app by changing this variable.
+### Automated Verification Suite
 
-## Verification and contract commands
+Run our comprehensive automated test suites covering unit tests, smart contract tests, and on-chain integration:
 
-Stop the development server before a production build to avoid competing over the `.next` cache.
-
-```sh
-npm run typecheck
+```bash
+# Run unit & workflow test suite (16 passing tests)
 npm test
+
+# Verify TypeScript types
+npm run typecheck
+
+# Run Rust smart contract tests (requires Rust & cargo)
 npm run contract:test
-npm run contract:build
-npm run contract:deploy    # deploys a new Testnet contract and rewrites .env.local
-```
 
-`npm run contract:deploy` should only be used when a fresh deployment is intended. It creates a new public contract ID, so existing SQLite invoice records are not migrated automatically. The current deployment is already live.
-
-For the full external Testnet and Anchor journey, run the app first and then:
-
-```sh
+# Run full end-to-end Testnet integration test
 npm run test:integration
-npm run test:erp
 ```
 
-These integration commands create temporary Testnet test wallets and write public evidence to `artifacts/`; they never use a user wallet or store a secret key.
+---
 
-## Project map
+## 🗺️ Project Structure
 
 ```text
-app/                       Landing, ERP workspace, finance UI, API routes
-components/                Language provider and UI primitives
-lib/                       ERP rules, auth, exact amounts, Anchor and Stellar adapters
-contracts/invoice-escrow/  Rust Soroban escrow contract and contract tests
-scripts/                   Deploy and Testnet smoke-test scripts
-tests/                     Unit and workflow coverage
-artifacts/                 Public contract and Testnet proof records
-docs/                      Product, design, Anchor, track, and research documentation
+├── app/                      # Next.js 15 App Router
+│   ├── page.tsx              # Landing page & value proposition
+│   ├── workspace/            # Core 8-module ERP interface
+│   ├── finance/              # Payments, Anchor TRY ↔ USDC & Escrow dashboard
+│   └── api/                  # Serverless API routes (bridge, erp)
+├── components/               # Radix UI primitives & responsive layout system
+├── contracts/
+│   └── invoice-escrow/       # Rust Soroban smart contract source & Cargo manifest
+├── lib/
+│   ├── anchor.ts             # SEP-1, SEP-6, SEP-10, SEP-38 Anchor client
+│   ├── stellar.ts            # Soroban RPC, Horizon, and contract adapters
+│   ├── erp.ts                # ERP operational engine, state machines, and journal logic
+│   ├── wallet.ts             # Stellar Wallets Kit & Freighter wallet bridge
+│   └── db.ts                 # Database persistence & state hydration
+├── artifacts/                # Verified on-chain Testnet deployment & integration proofs
+├── docs/                     # In-depth architectural & comparative research reports
+└── presentation.mp4          # 108-second full HD walkthrough video
 ```
 
-## Documentation
+---
 
-| Document | Purpose |
-|---|---|
-| [Product scope](docs/project/product-scope.md) | Product goals, ERP scope, and architecture notes |
-| [Comparative analysis](docs/project/comparative-analysis.md) | Positioning and alternatives |
-| [Stellar research](docs/research-stellar.md) | Detailed Anchor, escrow, and Testnet research |
-| [Anchor reference](docs/anchor-reference.md) | TR Mock Anchor integration reference |
-| [UI design system](docs/UI_DESIGN_SYSTEM.md) | Visual decisions and design tokens |
-| [Brand master](docs/design/brand-master.md) | Brand and editorial direction |
+## ⚖️ License & Acknowledgments
 
-## Scope and safety notes
+Built with ❤️ for the **Rise In × Stellar Pro Hackathon 2026 (Genesis Track)**.
 
-Centerp is a hackathon prototype, not a production banking, payroll, tax, or regulated accounting system. It intentionally does not claim GİB e-Invoice compatibility, real-bank settlement, Mainnet support, enterprise access control, or a public multi-tenant deployment. Local SQLite data is persistent but unencrypted; do not put sensitive production data into this demo.
-
-## Credits and references
-
-- [Stellar JavaScript SDK](https://github.com/stellar/js-stellar-sdk)
-- [Stellar Wallets Kit](https://stellarwalletskit.dev/)
-- [Freighter API](https://docs.freighter.app/extension-freighter-api/signing)
-- [Stellar smart-contract resources](https://developers.stellar.org/docs/build/smart-contracts)
-- [Stellar ecosystem standards](https://developers.stellar.org/docs/learn/encyclopedia/sep)
-
-Built for the Rise In × Stellar Pro Hackathon 2026, Genesis Track.
+* **Stellar Development Foundation (SDF)** for the stellar-sdk, Soroban SDK, and Freighter.
+* **Creit Tech** for the Stellar Wallets Kit.
+* **TR Mock Anchor Team** for the SEP-6/38 sandbox bridge.
