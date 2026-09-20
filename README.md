@@ -8,7 +8,7 @@
   </p>
 
   [![Live Demo](https://img.shields.io/badge/Live_Demo-centerp.vercel.app-C53D55?style=for-the-badge)](https://centerp.vercel.app)
-  [![Watch Demo](https://img.shields.io/badge/Watch_Demo-1m_48s-20352D?style=for-the-badge)](https://github.com/ugurrcoskun/Centerp/blob/main/presentation.mp4)
+  [![Watch Demo](https://img.shields.io/badge/Watch_Demo-1m_48s-20352D?style=for-the-badge)](https://centerp.vercel.app/presentation.mp4)
   [![Stellar Testnet](https://img.shields.io/badge/Stellar-Testnet-111318?style=for-the-badge)](https://stellar.expert/explorer/testnet)
 
   <br/>
@@ -68,13 +68,13 @@ flowchart LR
 | Experience | Link |
 |---|---|
 | **Live application** | [centerp.vercel.app](https://centerp.vercel.app) |
-| **108-second product walkthrough** | [Watch `presentation.mp4`](https://github.com/ugurrcoskun/Centerp/blob/main/presentation.mp4) |
+| **108-second product walkthrough** | [Watch the product demo](https://centerp.vercel.app/presentation.mp4) |
 | **Deployed escrow contract** | [Open on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CCDPQPUS5SIBJF6YK2FZZV65P45U5FK7A3TMUE25T62VS3GQ22OG76IL) |
 | **Testnet execution evidence** | [`artifacts/testnet-proof.json`](artifacts/testnet-proof.json) |
 | **ERP-to-Stellar evidence** | [`artifacts/erp-testnet-proof.json`](artifacts/erp-testnet-proof.json) |
 
 <p align="center">
-  <a href="https://github.com/ugurrcoskun/Centerp/blob/main/presentation.mp4">
+  <a href="https://centerp.vercel.app/presentation.mp4">
     <img src="docs/demo-preview.gif" alt="Centerp product walkthrough showing the ERP and Stellar finance workflow" width="100%" />
   </a>
   <br/>
@@ -307,7 +307,7 @@ lib/wallet.ts                Freighter and Wallets Kit integration
 lib/db.ts                    Local and deployed persistence
 artifacts/                   Deployment and end-to-end proof records
 docs/                        Product, architecture and research documentation
-presentation.mp4             108-second narrated walkthrough
+public/presentation.mp4      108-second narrated walkthrough
 ```
 
 ## Prototype scope
