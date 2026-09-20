@@ -177,37 +177,14 @@ The Anchor is non-custodial from Centerp's perspective: wallet keys remain in Fr
 ## Architecture and privacy boundary
 
 ```mermaid
-flowchart TB
-    subgraph Client[Client]
-        UI[Next.js 15 + React 19]
-        Wallet[Freighter / Stellar Wallets Kit]
-    end
+flowchart LR
+    UI["Web app<br/>Next.js + React"] <-->|"Sign XDR"| Wallet["Freighter<br/>Wallets Kit"]
+    UI --> API["Centerp API<br/>Node.js routes"]
 
-    subgraph App[Centerp application]
-        API[Node.js API routes]
-        ERP[ERP rules and reconciliation]
-        Store[(SQLite locally / Neon when deployed)]
-        AnchorClient[Anchor SEP client]
-    end
-
-    subgraph Stellar[Stellar Testnet]
-        Horizon[Horizon]
-        RPC[Soroban RPC]
-        Escrow[Rust escrow contract]
-        USDC[USDC SAC]
-        Anchor[TR Mock Anchor]
-    end
-
-    UI --> API
-    UI <-->|Sign XDR| Wallet
-    API --> ERP
-    ERP --> Store
-    API --> Horizon
-    API --> RPC
-    API <-->|SEP-1 / 6 / 10 / 38| AnchorClient
-    AnchorClient --> Anchor
-    RPC --> Escrow
-    Escrow --> USDC
+    API --> ERP["ERP rules &<br/>reconciliation"] --> Store[("SQLite / Neon")]
+    API <-->|"SEP-1 / 6 / 10 / 38"| Anchor["TR Mock Anchor"]
+    API --> Horizon["Stellar Horizon"]
+    API --> RPC["Soroban RPC"] --> Escrow["Rust escrow<br/>contract"] --> USDC["USDC SAC"]
 ```
 
 ### What stays off-chain
