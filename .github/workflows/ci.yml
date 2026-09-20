@@ -18,20 +18,11 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 22
           cache: npm
 
-      - name: Install locked dependencies
-        shell: bash
-        run: |
-          set +e
-          npm ci 2>&1 | tee npm-ci.log
-          install_status=${PIPESTATUS[0]}
-          if [ "$install_status" -ne 0 ]; then
-            detail=$(tail -n 20 npm-ci.log | tr '\n' ' ' | sed 's/%/%25/g; s/\r/%0D/g')
-            echo "::error file=package-lock.json::$detail"
-            exit "$install_status"
-          fi
+      - name: Install dependencies
+        run: npm install
 
       - name: Check types
         run: npm run typecheck
