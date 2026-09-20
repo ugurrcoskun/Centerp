@@ -9,6 +9,7 @@
 
   [![Live Demo](https://img.shields.io/badge/Live_Demo-centerp.vercel.app-C53D55?style=for-the-badge)](https://centerp.vercel.app)
   [![Watch Demo](https://img.shields.io/badge/Watch_Demo-1m_48s-20352D?style=for-the-badge)](https://centerp.vercel.app/demo)
+  [![Project Presentation](https://img.shields.io/badge/Project_Presentation-Google_Docs-C53D55?style=for-the-badge)](https://docs.google.com/document/d/181gDA3zyJkbDmM3zG8s0Eg8ZCkskBm8swwbMOdkRyYc/edit?usp=sharing)
   [![Stellar Testnet](https://img.shields.io/badge/Stellar-Testnet-111318?style=for-the-badge)](https://stellar.expert/explorer/testnet)
 
   <br/>
@@ -79,6 +80,7 @@ flowchart LR
 |---|---|
 | **Live application** | [centerp.vercel.app](https://centerp.vercel.app) |
 | **108-second product walkthrough** | [Watch the full product demo](https://centerp.vercel.app/demo) |
+| **Project presentation** | [Open the Centerp presentation on Google Docs](https://docs.google.com/document/d/181gDA3zyJkbDmM3zG8s0Eg8ZCkskBm8swwbMOdkRyYc/edit?usp=sharing) |
 | **Deployed escrow contract** | [Open on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CCDPQPUS5SIBJF6YK2FZZV65P45U5FK7A3TMUE25T62VS3GQ22OG76IL) |
 | **Testnet execution evidence** | [`artifacts/testnet-proof.json`](artifacts/testnet-proof.json) |
 | **ERP-to-Stellar evidence** | [`artifacts/erp-testnet-proof.json`](artifacts/erp-testnet-proof.json) |
