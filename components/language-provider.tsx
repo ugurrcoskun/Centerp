@@ -44,7 +44,7 @@ const pairs: [string, string][] = [
   ['Finans hareketi operasyon kaydına geri döner', 'Finance activity returns to the operations record'],
   ['Centerp çalışma alanında örnek şirket verileriyle uçtan uca akışı deneyimle.', 'Experience the end-to-end flow with sample company data in the Centerp workspace.'],
   ['36 SAATLİK MVP · STELLAR TESTNET', '36-HOUR MVP · STELLAR TESTNET'],
-  ['Videoya geç', 'Skip to video'], ['Demo navigasyonu', 'Demo navigation'], ['Ana sayfaya dön', 'Back to home'], ['Ana sayfa', 'Home'],
+  ['Videoya geç', 'Skip to video'], ['Demo navigasyonu', 'Demo navigation'], ['Ana sayfaya dön', 'Back to home'], ['Ana sayfa', 'Home'], ['Centerp’i', 'Centerp'], ['Stellar finansı', 'Stellar finance'],
   ['108 saniyelik ürün turu', '108-second product tour'], ['SESLİ DEMO', 'NARRATED DEMO'], ['iş başında', 'in action'], ['görün.', 'See it.'],
   ['Siparişten faturaya, TRY’den USDC’ye ve Soroban escrow’dan doğrulanabilir mutabakata uzanan tek iş akışı.', 'One workflow from order to invoice, TRY to USDC, and Soroban escrow to verifiable reconciliation.'],
   ['Demo kapsamı', 'Demo coverage'], ['ERP operasyonları', 'ERP operations'], ['Zincir üstü kanıt', 'On-chain proof'], ['Demo özeti', 'Demo summary'],
