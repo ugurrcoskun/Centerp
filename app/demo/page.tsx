@@ -1,88 +1,49 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
+import {useEffect, useRef, useState} from 'react';
 import Link from 'next/link';
 import {
+  ArrowLeft,
+  ArrowRight,
+  BadgeCheck,
+  Building2,
+  Check,
   Link2,
   Maximize2,
   Minimize2,
   Play,
-  Pause,
-  Volume2,
-  VolumeX,
-  ArrowRight,
-  ArrowLeft,
   ShieldCheck,
-  CheckCircle2,
-  ExternalLink,
-  Building2,
-  Sparkles
+  Sparkles,
 } from 'lucide-react';
 
 const TIMELINE_CHAPTERS = [
-  { time: '0:00', seconds: 0, title: 'Giriş & Problem', desc: 'Geleneksel ERP ile bankacılık arasındaki kopukluk ve Centerp vizyonu.' },
-  { time: '0:18', seconds: 18, title: 'ERP Modülleri', desc: 'Müşteri, tedarikçi, satış, satın alma, stok, üretim ve İK operasyonları.' },
-  { time: '0:50', seconds: 50, title: 'Stellar Ödeme & Anchor', desc: 'TRY ↔ USDC köprüsü, bakiye yönetimi ve emanet (escrow) güvenliği.' },
-  { time: '1:24', seconds: 84, title: 'On-chain Kanıt & Mutabakat', desc: 'Stellar Expert üzerinde doğrulanabilir işlem hashleri ve yevmiye kaydı.' },
+  {time: '0:00', seconds: 0, number: '01', title: 'Problem & vizyon', desc: 'ERP kayıtları ile ödeme kanıtı arasındaki kopukluğu görün.'},
+  {time: '0:18', seconds: 18, number: '02', title: 'ERP çalışma alanı', desc: 'Satış, satın alma, stok, üretim ve ekip süreçlerini keşfedin.'},
+  {time: '0:50', seconds: 50, number: '03', title: 'TRY, USDC & escrow', desc: 'Anchor köprüsünden korumalı Stellar ödemesine ilerleyin.'},
+  {time: '1:24', seconds: 84, number: '04', title: 'Zincir kanıtı', desc: 'Fatura, işlem hash’i ve mutabakat kaydını doğrulayın.'},
 ];
+
+type WebkitFullscreenElement = HTMLElement & {
+  webkitRequestFullscreen?: () => Promise<void> | void;
+};
+
+type WebkitFullscreenDocument = Document & {
+  webkitFullscreenElement?: Element | null;
+  webkitExitFullscreen?: () => Promise<void> | void;
+};
 
 export default function DemoPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(108);
-
-  const togglePlay = () => {
-    if (!videoRef.current) return;
-    if (videoRef.current.paused) {
-      videoRef.current.play();
-      setIsPlaying(true);
-    } else {
-      videoRef.current.pause();
-      setIsPlaying(false);
-    }
-  };
-
-  const toggleMute = () => {
-    if (!videoRef.current) return;
-    videoRef.current.muted = !videoRef.current.muted;
-    setIsMuted(videoRef.current.muted);
-  };
-
-  const toggleFullscreen = async () => {
-    const el = containerRef.current || videoRef.current;
-    if (!el) return;
-
-    try {
-      if (!document.fullscreenElement) {
-        if (el.requestFullscreen) {
-          await el.requestFullscreen();
-        } else if ((el as any).webkitRequestFullscreen) {
-          await (el as any).webkitRequestFullscreen();
-        }
-        setIsFullscreen(true);
-      } else {
-        if (document.exitFullscreen) {
-          await document.exitFullscreen();
-        }
-        setIsFullscreen(false);
-      }
-    } catch {
-      // Fallback directly to video element if container fails
-      if (videoRef.current && videoRef.current.requestFullscreen) {
-        videoRef.current.requestFullscreen().catch(() => {});
-      }
-    }
-  };
 
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      const webkitDocument = document as WebkitFullscreenDocument;
+      setIsFullscreen(Boolean(document.fullscreenElement || webkitDocument.webkitFullscreenElement));
     };
+
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
     return () => {
@@ -91,325 +52,157 @@ export default function DemoPage() {
     };
   }, []);
 
-  const handleTimeUpdate = () => {
-    if (!videoRef.current) return;
-    const cur = videoRef.current.currentTime;
-    const dur = videoRef.current.duration || 108;
-    setCurrentTime(cur);
-    setDuration(dur);
-    setProgress((cur / dur) * 100);
-  };
+  const toggleFullscreen = async () => {
+    const element = containerRef.current as WebkitFullscreenElement | null;
+    const webkitDocument = document as WebkitFullscreenDocument;
+    if (!element) return;
 
-  const seekTo = (sec: number) => {
-    if (!videoRef.current) return;
-    videoRef.current.currentTime = sec;
-    if (videoRef.current.paused) {
-      videoRef.current.play();
-      setIsPlaying(true);
+    try {
+      if (!document.fullscreenElement && !webkitDocument.webkitFullscreenElement) {
+        if (element.requestFullscreen) await element.requestFullscreen();
+        else await element.webkitRequestFullscreen?.();
+      } else if (document.exitFullscreen) {
+        await document.exitFullscreen();
+      } else {
+        await webkitDocument.webkitExitFullscreen?.();
+      }
+    } catch {
+      // Native video controls remain available if fullscreen is blocked.
     }
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  const seekTo = async (seconds: number) => {
+    if (!videoRef.current) return;
+    videoRef.current.currentTime = seconds;
+    try {
+      await videoRef.current.play();
+    } catch {
+      // The viewer can still start playback with the native controls.
+    }
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#0d1311',
-      color: '#e7eee9',
-      display: 'flex',
-      flexDirection: 'column',
-      fontFamily: 'system-ui, -apple-system, sans-serif'
-    }}>
-      {/* Top Header */}
-      <header style={{
-        padding: '16px 28px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
-        background: '#121b18'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#fff', textDecoration: 'none' }}>
-            <span className="brand-mark" style={{
-              background: '#f1f7ed',
-              color: '#173b2b',
-              width: '32px',
-              height: '34px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: '8px'
-            }}>
-              <Link2 size={20} />
-            </span>
-            <span style={{ fontSize: '20px', fontWeight: 700, letterSpacing: '-0.5px' }}>
-              Cent<span style={{ color: '#60d29e' }}>erp</span>
-            </span>
-          </Link>
-          <span style={{
-            fontSize: '11px',
-            color: '#82908a',
-            padding: '3px 8px',
-            background: 'rgba(255,255,255,0.04)',
-            borderRadius: '4px',
-            border: '1px solid rgba(255,255,255,0.06)'
-          }}>
-            Video Walkthrough
-          </span>
-        </div>
+    <div className="landing-shell demo-shell">
+      <a className="skip-link" href="#demo-player">Videoya geç</a>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Link href="/workspace" style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            background: '#168461',
-            color: '#fff',
-            padding: '8px 16px',
-            borderRadius: '8px',
-            fontSize: '13px',
-            fontWeight: 600,
-            textDecoration: 'none',
-            transition: 'background 0.2s'
-          }}>
-            <Building2 size={16} />
-            Çalışma Alanı (ERP)
+      <header className="landing-header demo-header">
+        <Link className="landing-brand" href="/" aria-label="Centerp ana sayfa">
+          <span className="brand-mark" aria-hidden="true"><Link2 size={24}/></span>
+          <span>Cent<span className="brand-accent">erp</span></span>
+        </Link>
+
+        <nav className="landing-nav" aria-label="Demo navigasyonu">
+          <Link href="/">Ana sayfa</Link>
+          <Link href="/workspace">ERP</Link>
+          <Link href="/finance">Stellar finansı</Link>
+        </nav>
+
+        <div className="landing-header-actions">
+          <Link className="landing-header-cta" href="/workspace">
+            Çalışma alanını aç <ArrowRight size={17} aria-hidden="true"/>
           </Link>
-          <Link href="/finance" style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            background: 'rgba(255,255,255,0.07)',
-            color: '#e7eee9',
-            padding: '8px 16px',
-            borderRadius: '8px',
-            fontSize: '13px',
-            fontWeight: 500,
-            textDecoration: 'none',
-            border: '1px solid rgba(255,255,255,0.1)'
-          }}>
-            <ShieldCheck size={16} />
-            Stellar Finans
-          </Link>
+          <div className="language-nav-slot" data-language-nav/>
         </div>
       </header>
 
-      {/* Main Container */}
-      <main style={{
-        flex: 1,
-        maxWidth: '1200px',
-        width: '100%',
-        margin: '0 auto',
-        padding: '32px 24px 60px',
-        boxSizing: 'border-box'
-      }}>
-        {/* Title row */}
-        <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px',
-                fontSize: '11px',
-                fontWeight: 700,
-                color: '#60d29e',
-                background: 'rgba(96, 210, 158, 0.1)',
-                padding: '4px 10px',
-                borderRadius: '999px',
-                letterSpacing: '0.5px'
-              }}>
-                <Sparkles size={12} />
-                108-SANİYELİK SESLİ ANLATIM
-              </span>
-            </div>
-            <h1 style={{ fontSize: '28px', fontWeight: 700, margin: 0, letterSpacing: '-0.8px' }}>
-              Centerp: Uçtan Uca Ürün Demosu
-            </h1>
-            <p style={{ margin: '6px 0 0', color: '#8e9d96', fontSize: '14px' }}>
-              Siparişten faturaya, Soroban escrow kilidinden nihai banka ve zincir içi mutabakatına kadar canlı akış.
-            </p>
+      <main className="demo-main">
+        <section className="demo-intro" aria-labelledby="demo-title">
+          <div className="demo-intro-copy">
+            <Link className="demo-back-link" href="/"><ArrowLeft size={15}/> Ana sayfaya dön</Link>
+            <div className="landing-kicker demo-kicker"><span>108 saniyelik ürün turu</span><i>SESLİ DEMO</i></div>
+            <h1 id="demo-title">Centerp’i<br/><em>iş başında</em> görün.</h1>
+            <p>Siparişten faturaya, TRY’den USDC’ye ve Soroban escrow’dan doğrulanabilir mutabakata uzanan tek iş akışı.</p>
+            <ul className="landing-proof-list" aria-label="Demo kapsamı">
+              <li><Check size={15}/> ERP operasyonları</li>
+              <li><Check size={15}/> Stellar Testnet</li>
+              <li><Check size={15}/> Zincir üstü kanıt</li>
+            </ul>
           </div>
 
-          <button
-            onClick={toggleFullscreen}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: '#233e31',
-              color: '#60d29e',
-              border: '1px solid #365b49',
-              padding: '10px 18px',
-              borderRadius: '8px',
-              fontSize: '13px',
-              fontWeight: 600,
-              cursor: 'pointer'
-            }}
-          >
-            {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-            {isFullscreen ? 'Tam Ekrandan Çık' : 'Tam Ekran İzle'}
-          </button>
-        </div>
+          <aside className="demo-intro-note" aria-label="Demo özeti">
+            <Sparkles size={24}/>
+            <span>Bir kaydı takip edin</span>
+            <strong>ERP → Invoice → Escrow → Proof</strong>
+            <p>Kağıt ve banka operasyonunu azaltan, düşük ücretli ve izlenebilir ödeme yolculuğu.</p>
+          </aside>
+        </section>
 
-        {/* Video Player Box */}
-        <div
-          ref={containerRef}
-          style={{
-            position: 'relative',
-            width: '100%',
-            background: '#000',
-            borderRadius: '16px',
-            overflow: 'hidden',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.08)',
-            aspectRatio: '16 / 9'
-          }}
-        >
-          <video
-            ref={videoRef}
-            src="/presentation.mp4"
-            playsInline
-            controls
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-            onTimeUpdate={handleTimeUpdate}
-            onLoadedMetadata={handleTimeUpdate}
-            style={{
-              width: '100%',
-              height: '100%',
-              display: 'block',
-              objectFit: 'contain'
-            }}
-          />
+        <section className="demo-stage" id="demo-player" aria-label="Centerp ürün videosu">
+          <div className="demo-stage-header">
+            <div><i/><i/><i/></div>
+            <span>CENTERP / PRODUCT WALKTHROUGH</span>
+            <b>01:48</b>
+          </div>
 
-          {/* Quick Fullscreen Overlay badge */}
-          {!isFullscreen && (
-            <button
-              onClick={toggleFullscreen}
-              title="Tam Ekran"
-              style={{
-                position: 'absolute',
-                top: '16px',
-                right: '16px',
-                background: 'rgba(18, 27, 24, 0.85)',
-                color: '#fff',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                backdropFilter: 'blur(8px)',
-                borderRadius: '8px',
-                padding: '8px 12px',
-                fontSize: '12px',
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                cursor: 'pointer',
-                zIndex: 10,
-                transition: 'all 0.2s'
-              }}
-            >
-              <Maximize2 size={14} />
-              Tam Ekran
+          <div className="demo-video-frame" ref={containerRef}>
+            <video
+              ref={videoRef}
+              src="/presentation.mp4"
+              playsInline
+              controls
+              preload="metadata"
+              aria-label="Centerp ERP ve Stellar ödeme ürün tanıtımı"
+              onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
+            />
+            <button className="demo-fullscreen" type="button" onClick={toggleFullscreen}>
+              {isFullscreen ? <Minimize2 size={17}/> : <Maximize2 size={17}/>}
+              {isFullscreen ? 'Tam ekrandan çık' : 'Tam ekran izle'}
             </button>
-          )}
-        </div>
+          </div>
+        </section>
 
-        {/* Chapter / Timeline navigator */}
-        <div style={{ marginTop: '28px' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: 600, color: '#e7eee9', marginBottom: '14px', letterSpacing: '-0.3px' }}>
-            Bölümler ve Akış Zaman Çizelgesi
-          </h2>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-            gap: '12px'
-          }}>
-            {TIMELINE_CHAPTERS.map((ch, idx) => {
-              const isActive = currentTime >= ch.seconds && (idx === TIMELINE_CHAPTERS.length - 1 || currentTime < TIMELINE_CHAPTERS[idx + 1].seconds);
+        <section className="demo-chapters" aria-labelledby="demo-chapters-title">
+          <div className="demo-section-heading">
+            <div>
+              <span>AKIŞ HARİTASI</span>
+              <h2 id="demo-chapters-title">İstediğiniz adımdan başlayın.</h2>
+            </div>
+            <p>Her bölüm Centerp’in operasyon kaydını ödeme ve zincir kanıtıyla nasıl birleştirdiğini gösterir.</p>
+          </div>
+
+          <div className="demo-chapter-grid">
+            {TIMELINE_CHAPTERS.map((chapter, index) => {
+              const next = TIMELINE_CHAPTERS[index + 1];
+              const active = currentTime >= chapter.seconds && (!next || currentTime < next.seconds);
               return (
-                <div
-                  key={ch.time}
-                  onClick={() => seekTo(ch.seconds)}
-                  style={{
-                    background: isActive ? '#1c2f26' : '#151e1b',
-                    border: `1px solid ${isActive ? '#60d29e' : 'rgba(255,255,255,0.06)'}`,
-                    borderRadius: '10px',
-                    padding: '14px 16px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
+                <button
+                  className={active ? 'demo-chapter active' : 'demo-chapter'}
+                  type="button"
+                  key={chapter.time}
+                  onClick={() => seekTo(chapter.seconds)}
+                  aria-current={active ? 'step' : undefined}
+                  aria-label={`${chapter.time} — ${chapter.title}`}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                    <span style={{
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      color: isActive ? '#60d29e' : '#8e9d96',
-                      background: 'rgba(0,0,0,0.3)',
-                      padding: '2px 7px',
-                      borderRadius: '5px'
-                    }}>
-                      {ch.time}
-                    </span>
-                    {isActive && <span style={{ fontSize: '10px', color: '#60d29e', fontWeight: 600 }}>Oynatılıyor</span>}
-                  </div>
-                  <strong style={{ display: 'block', fontSize: '14px', color: '#fff', marginBottom: '4px' }}>
-                    {ch.title}
-                  </strong>
-                  <p style={{ fontSize: '12px', color: '#8e9d96', margin: 0, lineHeight: 1.5 }}>
-                    {ch.desc}
-                  </p>
-                </div>
+                  <span className="demo-chapter-top"><b>{chapter.number}</b><i>{chapter.time}</i></span>
+                  <span className="demo-chapter-icon"><Play size={18} fill="currentColor"/></span>
+                  <strong>{chapter.title}</strong>
+                  <small>{chapter.desc}</small>
+                  <span className="demo-chapter-state">{active ? 'Şimdi oynatılıyor' : 'Bu bölümü oynat'} <ArrowRight size={14}/></span>
+                </button>
               );
             })}
           </div>
-        </div>
+        </section>
 
-        {/* Action Callout */}
-        <div style={{
-          marginTop: '36px',
-          padding: '24px',
-          background: 'linear-gradient(135deg, rgba(22, 132, 97, 0.15) 0%, rgba(18, 27, 24, 0.6) 100%)',
-          borderRadius: '14px',
-          border: '1px solid rgba(96, 210, 158, 0.25)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '20px'
-        }}>
+        <section className="demo-cta">
           <div>
-            <h3 style={{ fontSize: '17px', fontWeight: 600, margin: '0 0 6px', color: '#fff' }}>
-              Demoyu izlediniz mi? Canlı çalışma alanında kendiniz test edin.
-            </h3>
-            <p style={{ margin: 0, fontSize: '13px', color: '#a6b8ae' }}>
-              Kurulum gerektirmez. Hazır örnek verilerle satış oluşturabilir, faturalandırıp Stellar Testnet üzerinde ödeyebilirsiniz.
-            </p>
+            <span className="landing-label">CANLI TESTNET DENEYİMİ</span>
+            <h2>İzlemekle kalmayın.<br/>Akışı kendiniz tamamlayın.</h2>
+            <p>Hazır örnek verilerle sipariş oluşturun, faturayı Stellar’a taşıyın ve işlemin zincir kanıtını görün.</p>
           </div>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <Link
-              href="/workspace"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                background: '#60d29e',
-                color: '#0c1813',
-                padding: '10px 20px',
-                borderRadius: '8px',
-                fontSize: '13px',
-                fontWeight: 700,
-                textDecoration: 'none'
-              }}
-            >
-              Çalışma Alanını Başlat <ArrowRight size={16} />
-            </Link>
+          <div className="demo-cta-actions">
+            <Link href="/workspace"><Building2 size={19}/> ERP’yi aç <ArrowRight size={19}/></Link>
+            <Link href="/finance"><ShieldCheck size={18}/> Finans akışına git</Link>
           </div>
-        </div>
+          <div className="demo-cta-seal" aria-hidden="true"><BadgeCheck/><span>TESTNET<br/>VERIFIED</span></div>
+        </section>
       </main>
+
+      <footer className="landing-footer demo-footer">
+        <Link className="landing-brand landing-brand-footer" href="/"><span className="brand-mark" aria-hidden="true"><Link2 size={24}/></span><span>Cent<span className="brand-accent">erp</span></span></Link>
+        <p>Kurumsal kaynak planlama ile doğrulanabilir ödemeyi bir araya getirir.</p>
+        <div><span>Rise In × Stellar Pro Hackathon 2026</span><span>108 saniyelik ürün demosu · Testnet</span></div>
+      </footer>
     </div>
   );
 }
