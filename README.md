@@ -73,6 +73,8 @@ flowchart LR
 | **Testnet execution evidence** | [`artifacts/testnet-proof.json`](artifacts/testnet-proof.json) |
 | **ERP-to-Stellar evidence** | [`artifacts/erp-testnet-proof.json`](artifacts/erp-testnet-proof.json) |
 
+<br/>
+
 <p align="center">
   <a href="https://centerp.vercel.app/presentation.mp4">
     <img src="docs/demo-preview.gif" alt="Centerp product walkthrough showing the ERP and Stellar finance workflow" width="100%" />
@@ -80,6 +82,8 @@ flowchart LR
   <br/>
   <em>Click the preview to watch the full walkthrough with narration.</em>
 </p>
+
+<br/>
 
 ### Walkthrough timeline
 
