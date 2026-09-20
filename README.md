@@ -6,24 +6,9 @@
 [![Network: Stellar Testnet](https://img.shields.io/badge/network-Stellar%20Testnet-111318?style=flat-square&logo=stellar)](https://stellar.org/testnet)
 [![Soroban Escrow Contract](https://img.shields.io/badge/Soroban%20Escrow-Verified%20%26%20Live-CB2B45?style=flat-square)](artifacts/deployment.json)
 [![Anchor Integration](https://img.shields.io/badge/Stellar%20Anchor-SEP--1%20%7C%20SEP--6%20%7C%20SEP--10%20%7C%20SEP--38-0052FF?style=flat-square)](lib/anchor.ts)
-[![Tests](https://img.shields.io/badge/unit%20%26%20integration-16%20passing-10B981?style=flat-square)](tests)
+[![Tests](https://img.shields.io/badge/unit%20%26%20integration-19%20passing-10B981?style=flat-square)](tests)
 [![Stack](https://img.shields.io/badge/stack-Next.js%2015%20%7C%20TypeScript%20%7C%20Rust-111318?style=flat-square)](package.json)
 [![Hackathon](https://img.shields.io/badge/Rise%20In%20x%20Stellar-Pro%20Hackathon%202026-CB2B45?style=flat-square)](docs/hackathon-tracks.md)
-
----
-
-## 🎥 2-Minute Presentation & Demo Video
-
-Watch the complete walkthrough demonstrating Centerp’s end-to-end flow: from our unified 8-module ERP workspace, to fiat TRY Anchor on-ramping, Soroban smart contract escrow funding, delivery verification, and on-chain explorer proof.
-
-🎬 **[Watch Presentation Video (`presentation.mp4`)](presentation.mp4)**
-
-```
-0:00 - 0:18  | Executive introduction & the core enterprise problem
-0:18 - 0:50  | Complete Workspace Tour: CRM, Sales, Purchasing, Stock, Production, HR, Accounting
-0:50 - 1:24  | Payments & Reconciliation: Stellar Anchor bridge (TRY ⇄ USDC) & Soroban escrow
-1:24 - 1:48  | Invoice settlement, cryptographic proof on Stellar Expert explorer & conclusion
-```
 
 ---
 
@@ -73,6 +58,33 @@ flowchart LR
 - **Smart Escrow for Trade:** Sales orders automatically generate escrow-backed invoices. Funds remain locked in a Soroban smart contract until the buyer approves delivery.
 - **Seamless Local Currency On/Off Ramp:** Through Stellar Anchors, users can pay in local Turkish Lira (TRY) via bank transfer, which converts seamlessly into USDC without ever touching a crypto exchange.
 - **Cryptographic Reconciliation:** Every payment produces a verifiable transaction hash on the Stellar ledger, instantly updating stock, invoices, and accounting journals with zero manual work.
+
+---
+
+## 🎥 2-Minute Presentation & Demo Video
+
+<div align="center">
+  <a href="https://github.com/ugurrcoskun/Centerp/raw/main/presentation.mp4" target="_blank">
+    <img src="docs/demo-preview.gif" alt="Centerp Walkthrough Demo Preview" width="100%" style="border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);" />
+  </a>
+  <p><em>Click the preview above or the button below to watch the full 108-second video with audio narration.</em></p>
+  <p>
+    <a href="https://github.com/ugurrcoskun/Centerp/raw/main/presentation.mp4">
+      <img src="https://img.shields.io/badge/▶️%20Watch%20Full%20Demo%20Video-presentation.mp4-CB2B45?style=for-the-badge&logo=youtube" alt="Watch Presentation Video" />
+    </a>
+  </p>
+</div>
+
+<video src="https://github.com/ugurrcoskun/Centerp/raw/main/presentation.mp4" controls="controls" width="100%">
+  Your browser does not support inline video. <a href="https://github.com/ugurrcoskun/Centerp/raw/main/presentation.mp4">Click here to download and view presentation.mp4</a>.
+</video>
+
+```
+0:00 - 0:18  | Executive introduction & the core enterprise problem
+0:18 - 0:50  | Complete Workspace Tour: CRM, Sales, Purchasing, Stock, Production, HR, Accounting
+0:50 - 1:24  | Payments & Reconciliation: Stellar Anchor bridge (TRY ⇄ USDC) & Soroban escrow
+1:24 - 1:48  | Invoice settlement, cryptographic proof on Stellar Expert explorer & conclusion
+```
 
 ---
 
@@ -235,7 +247,7 @@ Open [http://127.0.0.1:3000](http://127.0.0.1:3000) in Chrome or Edge with Freig
 Run our comprehensive automated test suites covering unit tests, smart contract tests, and on-chain integration:
 
 ```bash
-# Run unit & workflow test suite (16 passing tests)
+# Run unit & workflow test suite (19 passing tests)
 npm test
 
 # Verify TypeScript types
@@ -269,6 +281,7 @@ npm run test:integration
 │   └── db.ts                 # Database persistence & state hydration
 ├── artifacts/                # Verified on-chain Testnet deployment & integration proofs
 ├── docs/                     # In-depth architectural & comparative research reports
+│   └── demo-preview.gif      # High-framerate visual walkthrough preview
 └── presentation.mp4          # 108-second full HD walkthrough video
 ```
 
