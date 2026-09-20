@@ -49,26 +49,13 @@ Centerp is a working ERP prototype where **the business event and its financial 
 > **Centerp does not add blockchain as a separate dashboard. It makes settlement part of the ERP workflow.**
 
 ```mermaid
-flowchart TB
-    subgraph Operations["01 — BUSINESS OPERATIONS"]
-        direction LR
-        A["Business operation"] --> B["ERP record"] --> C["Invoice or payable"]
-    end
-
-    subgraph Payment["02 — PAYMENT ROUTE"]
-        direction LR
-        D{"Choose a route"} -->|"TRY"| E["Stellar Anchor"]
-        E --> F["USDC"]
-        D -->|"Direct USDC"| F
-    end
-
-    subgraph Settlement["03 — SETTLEMENT & RECONCILIATION"]
-        direction LR
-        G["Soroban escrow<br/>or direct payment"] --> H["On-chain<br/>confirmation"] --> I["ERP reconciliation"]
-    end
-
+flowchart LR
+    A["ERP operation<br/>Invoice or payable"] --> B{"Payment route"}
+    B -->|"TRY"| C["Stellar Anchor<br/>TRY → USDC"]
+    B -->|"Direct"| D["USDC"]
     C --> D
-    F --> G
+    D --> E["Soroban escrow<br/>or direct payment"]
+    E --> F["Verified settlement<br/>ERP reconciliation"]
 ```
 
 ---
