@@ -48,6 +48,17 @@ Centerp is a working ERP prototype where **the business event and its financial 
 
 > **Centerp does not add blockchain as a separate dashboard. It makes settlement part of the ERP workflow.**
 
+### Traditional ERP vs. Centerp
+
+| | Typical standalone ERP | Centerp |
+|---|---|---|
+| **Payment execution** | The ERP records what should be paid; payment is completed in a separate bank interface. | The payment is prepared from the ERP source record and authorized with the company wallet. |
+| **Invoice protection** | Delivery and payment assurance depend on external contracts, banking products or manual trust. | USDC can remain in Soroban escrow until the buyer confirms delivery. |
+| **Reconciliation** | Teams import statements and match references back to invoices and payables. | A verified transaction hash updates the related invoice, liability and management ledger. |
+| **Settlement route** | Local and cross-border rails require separate banking or payment integrations. | Businesses can use direct USDC or a standards-based TRY ↔ USDC Anchor route. |
+| **Audit evidence** | Evidence primarily lives in internal records and exported bank documents. | Settlement can be independently checked on Stellar while the ERP retains its business context. |
+| **Commercial privacy** | Operational and financial details stay inside the central application database. | Sensitive ERP data stays off-chain; only settlement data and an invoice commitment reach Stellar. |
+
 ```mermaid
 flowchart LR
     A["ERP operation<br/>Invoice or payable"] --> B{"Payment route"}
