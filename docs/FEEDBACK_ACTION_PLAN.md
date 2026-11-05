@@ -1,7 +1,7 @@
 # Centerp — Geri bildirim ve uygulama takip planı
 
 Oluşturulma: 5 Kasım 2026  
-Durum: Uygulama sürüyor. Hukuki kapsam, CI, escrow v2, auth, roller, lisans ve yol haritası kod/doküman değişiklikleri hazır; Testnet ve yayın doğrulamaları sürüyor.
+Durum: Sekiz geri bildirimin teknik kontrolleri tamamlandı. Kullanıcı kabulü, zamanlayıcı gözlemi ve gerçek para kullanımı için dış onaylar açık.
 
 Bu dosya sekiz geri bildirimin ortak takip kaydıdır. Her aşamada önce uygulama, sonra teknik doğrulama, ardından kullanıcı kontrolü yapılır. Kodun yazılması tek başına işin tamamlandığı anlamına gelmez.
 
@@ -35,7 +35,7 @@ Bu dosya sekiz geri bildirimin ortak takip kaydıdır. Her aşamada önce uygula
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 | Hukuki kapsam ve Türkiye ürün konumlandırması | P0 | Yok; dış hukuki değerlendirme üretim öncesi gerekir | [x] | [x] | [ ] |
 | 2 | Rust kontrat testlerini CI'a ekleme | P1 | Yok | [x] | [x] | [ ] |
-| 3 | Escrow zaman aşımı, itiraz ve kesin sonuçlandırma | P0 | 1'in ürün sınırı, 2; itiraz politikası kararı | [x] | [ ] | [ ] |
+| 3 | Escrow zaman aşımı, itiraz ve kesin sonuçlandırma | P0 | 1'in ürün sınırı, 2; itiraz politikası kararı | [x] | [x] | [ ] |
 | 4 | Sabit SEP-10 sunucu anahtarı ve stellar.toml | P1 | Yok; dağıtımda kalıcı secret gerekir | [x] | [x] | [ ] |
 | 5 | Şirket üyeliği, roller ve işlem yetkileri | P1 | 4; şirket cüzdanı/imzacı modeli kararı | [x] | [x] | [ ] |
 | 6 | Açık kaynak lisansı | P2 | Hak sahipliği ve lisans seçiminin netleştirilmesi | [x] | [x] | [ ] |
@@ -92,7 +92,8 @@ Bu aşama önce davranış tasarımı, ardından kodlama olarak ilerler. Yalnız
 - [x] Açık itirazın sonsuza kadar fon kilitlememesi için çözüm yetkilisini, çözüm süresini ve yetkili de yanıt vermezse nihai sonucu belirle. Yeni hakem/admin yetkilerini açıkça belgele.
 - [x] Kontrat ve uygulamadaki durumları, işlem hazırlamayı, sonuç doğrulamayı ve muhasebe mutabakatını birlikte güncelle.
 - [x] Süre sonu çağrısını kimin yapacağını uygula: izin gerektirmeyen sonuçlandırma çağrısı ve worker/keeper; işlem ücretini, tekrar denemeyi ve izlemeyi tanımla. Yerel gerçek keeper iadesi test edildi.
-- [ ] Gerçek deployment ortamında cron/secret kurulumu ve uyarı alıcısını doğrula.
+- [x] Canlı cron erişimi ve günlük takvim doğrulandı. Elle tetiklenen GitHub keeper sağlık kontrolü başarılı.
+- [ ] İlk otomatik cron çalışmasını ve GitHub bildirim teslimini doğrula.
 - [x] Testler: son tarihten hemen önce/tam sınırda/sonra, onay vermeyen alıcı, kaybolan satıcı, açık itiraz, yanıt vermeyen çözüm yetkilisi, yetkisiz işlem, tekrar ödeme/iade, token bakiyesi ve hata halinde geri alma.
 - [x] Eski kontratın upgrade fonksiyonu olmadığını dikkate al; yeni dağıtım ve eski kontratta kalan faturalar/fonlar için geçiş planı yaz. Eski fonlar yeni kodla otomatik düzelmiş sayılmayacak.
 
@@ -188,7 +189,7 @@ Yeni satır biçimi: tarih, aşama, değişen dosya/commit, çalıştırılan ko
 ## Uygulama sırasında doğrulanan sonuçlar
 
 - 5 Kasım: `npm test` 29 test; `npm run contract:test` 12 test; `npm run typecheck` geçti. İnceleme düzeltmelerinden sonraki son üretim build'i de geçti.
-- Yerel public key ve `stellar.toml` HTTP 200 doğrulandı; gerçek yerel production restart sonrasında key değişmedi. `npm run test:auth`: CORS, imzalı challenge, JWT, replay ve domain reddi geçti. Gerçek çok sunuculu ortam ve production secret kurulumu açık.
+- Yerel public key ve `stellar.toml` HTTP 200 doğrulandı; gerçek yerel production restart sonrasında key değişmedi. `npm run test:auth`: CORS, imzalı challenge, JWT, replay ve domain reddi geçti. Canlı secret kurulumu ve bağımsız proses üzerinden Neon oturum kontrolü de geçti.
 - Yeni Testnet kontratı: `CDJKNS4FOHGESEKME27CQ4E4Z3CQ2JOF5W6ZEML63E47WFVNTZCANABZ`. Yerel WASM SHA-256, dağıtım kaydıyla aynı. Explorer artık verified; resmi release, attestation ve dağıtım WASM özetleri aynı.
 - ERP ve tam anchor yatırma/çekme testleri geçti: [ERP kanıtı](../artifacts/erp-testnet-v2-proof.json), [tam akış kanıtı](../artifacts/testnet-v2-proof.json).
 - Gerçek Testnet keeper süre sonu iadesi, bağımsız hakem iadesi ve tekrar kararın reddi geçti; alıcı bakiyesi tam geri döndü: [escrow v2 kanıtı](../artifacts/escrow-v2-proof.json).
@@ -200,9 +201,9 @@ Yeni satır biçimi: tarih, aşama, değişen dosya/commit, çalıştırılan ko
 
 ## GitHub yayını ve canlı ortam onayı
 
-Kullanıcının sonraki talimatıyla GitHub gönderimi onaylandı ve `codex/feedback-hardening` dalı yayınlandı. İlk kaynak attestation başarılı; indirilen WASM dağıtılmış kontratla birebir eşleşiyor. Güncel CI `465c0a4` için yeşil. Stellar Expert'in sabitlenmiş resmi release workflow'u ve explorer doğrulaması tamamlandı. Kullanıcının açık Production yayın onayıyla mevcut GitHub main → Vercel akışı kullanılacak; `.gitignore` değişikliği korunuyor.
+Kullanıcının sonraki talimatıyla GitHub gönderimi onaylandı ve `codex/feedback-hardening` dalı yayınlandı. İlk kaynak attestation başarılı; indirilen WASM dağıtılmış kontratla birebir eşleşiyor. Güncel CI `465c0a4` için yeşil. Stellar Expert'in sabitlenmiş resmi release workflow'u ve explorer doğrulaması tamamlandı. Kullanıcının açık Production yayın onayıyla mevcut GitHub main → Vercel akışı kullanıldı. `.gitignore` değişikliği korunuyor.
 
-Vercel oturumu ve bağlı `centerp` projesi doğrulandı; mevcut canlı cron tanımları boş. Otomatik onay denetimi Production secret aktarımını ayrıca reddetti. Üç secret ve dört public ayar, kaynak/hedef ve sonraki kontroller [dağıtım listesinde](DEPLOYMENT_CHECKLIST.md) somut olarak yazıldı; tam kapsam için kullanıcıya tek onay sorusu iletildi. Kullanıcı açıkça onayladı; yedi ayar başarıyla aktarıldı ve Production/sensitive metadatası doğrulandı. Web uygulaması `ca51004` ile canlıya alındı. Auth ve Neon oturum testleri geçti. Keeper izleme kontrolü sürüyor.
+Vercel oturumu, bağlı `centerp` projesi ve canlı cron takvimi doğrulandı. Otomatik onay denetimi Production secret aktarımını ayrıca reddetti. Üç secret ve dört public ayar, kaynak/hedef ve sonraki kontroller [dağıtım listesinde](DEPLOYMENT_CHECKLIST.md) somut olarak yazıldı; tam kapsam için kullanıcıya tek onay sorusu iletildi. Kullanıcı açıkça onayladı; yedi ayar başarıyla aktarıldı ve Production/sensitive metadatası doğrulandı. Web uygulaması `ca51004` ile canlıya alındı. Auth ve Neon oturum testleri geçti. Keeper izleme `4a04fb6` ile canlı. Sağlık kontrolü elle tetiklendi ve geçti.
 
 ## Agent mimarisi ek işi
 
@@ -211,3 +212,12 @@ Kullanıcının köke eklediği mimari belgesi [docs/development/AGENT_ARCHITECT
 Son kontrol günlüğü: 5 Kasım 2026 — 29 uygulama testi, 12 Rust testi, typecheck, WASM ve son production build başarılı. Yeni auth smoke restart sonrasında tekrar geçti. Hazır diff inceleme paketi `output/feedback-review.patch` altında; dış gönderim yapılmadı.
 
 5 Kasım devam kaydı: GitHub CI yeşil; ilk attested WASM özeti dağıtımla aynı. Eski şirket sahipleri için üyelik etkinleştirme arayüzü eklendi. Bu değişiklik sonrası 29 test, typecheck ve build geçti.
+
+5 Kasım canlı doğrulaması: `4a04fb6` Uğur Coşkun adına kaydedildi ve GitHub üzerinden Vercel’e yayınlandı. [Son CI](https://github.com/ugurrcoskun/Centerp/actions/runs/42039900443) 31 uygulama testi, 12 Rust testi ve derlemeleri geçti. Canlı auth, Neon oturumu, cron yetkisi ve sağlık kaydı doğrulandı. [İzleme çalışması](https://github.com/ugurrcoskun/Centerp/actions/runs/42040101414) geçti.
+
+## 5 Kasım tekrar kontrolü
+
+- Sekiz başlık yeniden kontrol edildi. Canlı `stellar.toml` 200, keeper sağlık ucu 200 ve kimliksiz cron isteği 401 döndü. Stellar Expert doğrulaması ve önceki GitHub CI başarısı teyit edildi.
+- Bağımsız incelemede keeper’ın tek bir fatura okuma hatasında sonraki faturaları atladığı görüldü. Okuma ve hazırlık hatası artık ilgili faturayla sınırlı. İşlem kaydı yazılmaya başladıysa veya gönderim sonucu belirsizse keeper durup sonraki çalışmada mevcut kayıttan devam ediyor. Bu senaryonun regresyon testiyle birlikte 32 uygulama testi, TypeScript kontrolü ve 12 Rust testi geçti.
+- Uygulama dışı cüzdanla yapılan sonuçlandırmalar için keeper bir mutabakat uyarısı üretiyor. Pilot kapsamındaki bu işlemler elle takip ediliyor.
+- Kullanıcıyla yapılacak kabul testi sonraki oturuma bırakıldı. Önce Şirket profili → Üyelik ve yetkiler üzerinden roller, sonra escrow teslim/itiraz/iade ve mutabakat akışı denenir.

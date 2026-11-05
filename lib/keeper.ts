@@ -44,10 +44,12 @@ export async function runKeeper() {
   const lastRun = (id: string) => operations.find(o=>o.invoiceId===id&&o.account===account)?.createdAt || 0;
   candidates.sort((a,b)=>lastRun(a.id)-lastRun(b.id));
   for (const invoice of candidates.slice(0, 25)) {
+    let reconciliationOrSubmissionStarted = false;
     try {
       // A saved pending hash is reconciled before any new sequence is prepared.
       const pending = records<ChainOperation>('operation').find(o => o.account === account && o.invoiceId === invoice.id && ['prepared','pending'].includes(o.status));
       if (pending) {
+        reconciliationOrSubmissionStarted = true;
         if (pending.status === 'prepared') {
           // Preparation is persisted as pending before network submission below.
           // This branch handles interrupted older runs conservatively.
@@ -80,6 +82,7 @@ export async function runKeeper() {
       const tx = await soroban.prepareTransaction(new TransactionBuilder(source, {fee: '100', networkPassphrase: STELLAR.passphrase}).addOperation(new Contract(address).call(kind, ...args)).setTimeout(180).build());
       tx.sign(signer);
       const operation: ChainOperation = {id: randomUUID(), account, invoiceId: invoice.id, kind: kind === 'get' ? 'heartbeat' : kind, xdr: tx.toXDR(), hash: Buffer.from(tx.hash()).toString('hex'), status: 'pending', createdAt: Date.now()};
+      reconciliationOrSubmissionStarted = true;
       putRecord('operation', operation.id, account, operation);
       revision = await persistDatabase(revision) ?? revision;
       // The signed hash is durable before any network side effect.
@@ -92,10 +95,10 @@ export async function runKeeper() {
       revision = await persistDatabase(revision) ?? revision;
       report.push({invoiceId: invoice.id, status: operation.status, hash: operation.hash});
     } catch (e) {
-      // A persistence conflict aborts the batch rather than overwriting another
-      // request's snapshot. Other errors leave durable pending operations intact.
       report.push({invoiceId: invoice.id, status: 'error', error: e instanceof Error ? e.message : 'Keeper hatası'});
-      break;
+      // Read or preparation errors are isolated to this invoice. Once the
+      // snapshot may have changed or a send is ambiguous, retry on a fresh run.
+      if (reconciliationOrSubmissionStarted) break;
     }
   }
   return {processed: report.length, remaining: Math.max(0, candidates.length - 25), report};

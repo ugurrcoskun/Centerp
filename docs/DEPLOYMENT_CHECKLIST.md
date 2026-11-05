@@ -36,8 +36,10 @@ Mevcut entegrasyon `ugurrcoskun/Centerp`, üretim dalı `main`. Çift yayın yer
 - [x] Yedi ortam değişkeni Vercel Production'da doğrulandı.
 - [x] `ca51004` GitHub `main` üzerinden otomatik yayınlandı. Canlı `stellar.toml`, yapılandırılan public key'i, domain'i ve Testnet ağını gösterdi.
 - [x] Canlı auth testi CORS, imza, JWT, replay ve domain kontrollerini geçti. Ayrı bir proses aynı Neon veritabanı üzerinden canlı challenge'ı oturuma çevirdi. Canlı uygulama oturumu kabul etti ve replay'i reddetti. [Test kanıtı](../artifacts/production-auth-proof.json)
-- [ ] Son keeper yayını sonrası cron yetkisini, Vercel takvimini ve sağlık kaydını doğrula.
-- [ ] Saatlik GitHub Actions sağlık kontrolünü canlı ortamda çalıştır.
+- [x] `4a04fb6` canlı. Vercel takvimi `/api/cron/escrow` için `0 3 * * *` olarak kayıtlı. 5 Kasım 16:55’te kimliksiz istek `401`, yetkili çağrı `200`, kalıcı sağlık kaydı `ok` döndü. Bu çağrıda işlenecek fatura yoktu. İki canlı deployment arasında `stellar.toml` aynı kaldı.
+- [x] Saatlik GitHub Actions sağlık kontrolü tanımlandı ve canlı uç noktaya karşı elle çalıştırılan ilk kontrol geçti. [Keeper izleme çalışması](https://github.com/ugurrcoskun/Centerp/actions/runs/42040101414)
+- [ ] İlk otomatik Vercel çalışmasını gözle. Takvim İstanbul saatiyle 06:00 ve son sağlık kaydı elle tetiklenen çalışmaya ait.
+- [ ] GitHub bildirim teslimini proje sahibiyle doğrula.
 - [ ] Kullanıcıyla son ekran ve iş akışı kontrolünü yap.
 
 ## Üretim işletmesi için ayrıca açık kapılar

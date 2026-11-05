@@ -5,7 +5,7 @@ import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {Account, Asset, Keypair, Transaction, TransactionBuilder, Operation, nativeToScVal, StrKey} from '@stellar/stellar-sdk';
 import {availableKeeperXlm,runKeeper} from '../lib/keeper';
-import {putRecord, record, records} from '../lib/db';
+import {deleteRecord, putRecord, record, records} from '../lib/db';
 import {horizon, soroban, LEGACY_CONTRACT_ID, invoiceContract, pollOperation} from '../lib/stellar';
 import {syncERPInvoice} from '../lib/erp';
 import {STELLAR} from '../lib/config';
@@ -110,4 +110,41 @@ test('keeper fee availability excludes reserve sponsorship and selling liabiliti
   assert.equal(availableKeeperXlm({balances,subentry_count:2,num_sponsoring:2,num_sponsored:1},5000000).toString(),'1.5');
   assert.equal(availableKeeperXlm({balances:[{asset_type:'native',balance:'1.0000000'}]},5000000).toString(),'0');
   assert.equal(availableKeeperXlm({balances:[{asset_type:'native',balance:'1.0000000'}],num_sponsored:2},5000000).toString(),'1');
+});
+
+test('an unreadable invoice does not prevent the next invoice from being finalized', async () => {
+  const keeper = Keypair.random();
+  const merchant = Keypair.random().publicKey();
+  const base: Invoice = {
+    id: 'ab'.repeat(32), code: 'BATCH', merchant, buyer: Keypair.random().publicKey(),
+    amount: '1.0000000', buyerName: 'Buyer', description: 'Keeper batch', due: 1,
+    deliveryDue: 2, commitment: 'bb'.repeat(32), status: 'funded', version: 2,
+    contract: new Asset('USDC', STELLAR.issuer).contractId(STELLAR.passphrase), transactions: [], createdAt: Date.now(),
+  };
+  const unreadable = {...base, id: 'cd'.repeat(32)};
+  const invoices = [base, unreadable];
+  process.env.ESCROW_KEEPER_SECRET = keeper.secret();
+  // Keep the new fixtures ahead of the cases used by earlier tests.
+  for (const invoice of records<Invoice>('invoice')) deleteRecord('invoice', invoice.id);
+  for (const invoice of invoices) putRecord('invoice', invoice.id, merchant, invoice);
+  mock.method(horizon, 'loadAccount', async () => Object.assign(new Account(keeper.publicKey(), '1'), {balances: [{asset_type: 'native', balance: '10000'}]}));
+  mockReserve();
+  mock.method(soroban, 'getAccount', async () => new Account(keeper.publicKey(), '1'));
+  let reads = 0;
+  mock.method(soroban, 'simulateTransaction', async () => {
+    if (++reads === 1) throw new Error('Invoice ledger entry unavailable');
+    return {transactionData: {}, result: {retval: nativeToScVal({status: ['Funded']})}};
+  });
+  mock.method(soroban, 'prepareTransaction', async (tx: Transaction) => tx);
+  const send = mock.method(soroban, 'sendTransaction', async () => ({status: 'PENDING'}));
+  try {
+    const {report} = await runKeeper();
+    assert.deepEqual(report.map(({invoiceId, status}) => [invoiceId, status]), [[unreadable.id, 'error'], [base.id, 'pending']]);
+    assert.equal(send.mock.callCount(), 1);
+    assert.equal(records<ChainOperation>('operation').find(op => op.invoiceId === base.id)?.kind, 'finalize');
+  } finally {
+    mock.restoreAll();
+    delete process.env.ESCROW_KEEPER_SECRET;
+    for (const invoice of invoices) deleteRecord('invoice', invoice.id);
+  }
 });
