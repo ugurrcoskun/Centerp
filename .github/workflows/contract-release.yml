@@ -10,41 +10,42 @@ on:
 permissions:
   contents: read
 jobs:
-  attest:
+  test:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      id-token: write
-      attestations: write
+      contents: write
     steps:
       - uses: actions/checkout@v4
-      - name: Use pinned Rust
-        run: rustup show active-toolchain
+      - run: rustup show active-toolchain
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: contracts/invoice-escrow
-      - name: Test source before attesting
-        run: cargo test --locked --manifest-path contracts/invoice-escrow/Cargo.toml
-      - uses: stellar/stellar-cli@v28.1.0
-        with:
-          version: '28.1.0'
-      - name: Build with source metadata
-        run: stellar contract build --locked --manifest-path contracts/invoice-escrow/Cargo.toml --meta source_repo=github:ugurrcoskun/Centerp --meta home_domain=centerp.vercel.app --out-dir artifacts/verified
-      - uses: actions/upload-artifact@v4
-        with:
-          name: invoice-escrow-verified
-          path: artifacts/verified/invoice_escrow.wasm
-          if-no-files-found: error
-      - uses: actions/attest-build-provenance@v3
-        with:
-          subject-path: artifacts/verified/invoice_escrow.wasm
-      - name: Request Stellar Expert source matching
+      - run: cargo test --locked --manifest-path contracts/invoice-escrow/Cargo.toml
+      - name: Bind release tag to the tested branch commit
         env:
-          SOURCE_REPO: ${{ github.server_url }}/${{ github.repository }}
-          SOURCE_COMMIT: ${{ github.sha }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SOURCE_SHA: ${{ github.sha }}
+          SOURCE_REPO: ${{ github.repository }}
           SOURCE_RUN: ${{ github.run_id }}
-          SOURCE_JOB: ${{ github.job }}
         run: |
-          HASH=$(sha256sum artifacts/verified/invoice_escrow.wasm | cut -d ' ' -f 1)
-          jq -n --arg repository "$SOURCE_REPO" --arg commitHash "$SOURCE_COMMIT" --arg runId "$SOURCE_RUN" --arg jobId "$SOURCE_JOB" --arg contractHash "$HASH" '{repository:$repository,commitHash:$commitHash,runId:$runId,jobId:$jobId,contractHash:$contractHash,relativePath:"contracts/invoice-escrow",packageName:"invoice-escrow"}' > /tmp/source-match.json
-          curl --fail-with-body --max-time 30 -H 'Content-Type: application/json' --data-binary @/tmp/source-match.json https://api.stellar.expert/explorer/public/contract-validation/match
+          TAG="escrow-v2-testnet-${SOURCE_RUN}_contracts_invoice_escrow_invoice-escrow_pkg0.2.0_cli28.1.0"
+          if EXISTING=$(gh api "repos/${SOURCE_REPO}/git/ref/tags/${TAG}" --jq .object.sha 2>/dev/null); then
+            test "$EXISTING" = "$SOURCE_SHA"
+          else
+            gh api "repos/${SOURCE_REPO}/git/refs" -f "ref=refs/tags/${TAG}" -f "sha=${SOURCE_SHA}"
+          fi
+  release:
+    needs: test
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    uses: stellar-expert/soroban-build-workflow/.github/workflows/release.yml@6b16426dd3a61715ddddf83a2df322a6371fe071
+    with:
+      release_name: escrow-v2-testnet-${{ github.run_id }}
+      release_description: Testnet escrow v2 source verification; no Mainnet deployment.
+      relative_path: contracts/invoice-escrow
+      package: invoice-escrow
+      home_domain: centerp.vercel.app
+    secrets:
+      release_token: ${{ secrets.GITHUB_TOKEN }}

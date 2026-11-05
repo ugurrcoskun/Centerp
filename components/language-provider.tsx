@@ -180,6 +180,7 @@ const pairs: [string, string][] = [
   ['Bu yerel prototipte şirket çalışma alanı tarayıcının güvenli oturumuyla saklanır. Çok kullanıcılı yetki yönetimi sonraki aşamadır.', 'In this local prototype, the company workspace is stored with the browser’s secure session. Multi-user permissions are a later-stage feature.'],
   ['Bağlı · Testnet', 'Connected · Testnet'], ['Satış faturaları, tedarikçi ve çalışan ödemeleri bu cüzdana bağlıdır.', 'Sales invoices and vendor and employee payments are linked to this wallet.'],
   ['Finans modülünde cüzdanını bağla ve şirket cüzdanı olarak eşleştir.', 'Connect your wallet in the finance module and link it as the company wallet.'], ['Bağlı cüzdanı şirketle eşleştir', 'Link connected wallet to company'],
+  ['Cüzdan imzasıyla üyeliği etkinleştir', 'Activate membership with wallet signature'],
 
   ['Finans ve mutabakat', 'Finance and reconciliation'], ['ERP çalışma alanına dön', 'Return to ERP workspace'], ['Genel bakış', 'Overview'], ['Faturalar', 'Invoices'], ['Ödemeler & escrow', 'Payments & escrow'], ['Ağ & bağlantılar', 'Network & connections'], ['Başlangıç rehberi', 'Getting started'],
   ['Finans', 'Finance'], ['Ana menü', 'Main navigation'], ['Tahsilat para birimi', 'Collection currency'],
