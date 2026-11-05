@@ -4,7 +4,7 @@ import {mkdtempSync} from 'node:fs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {Account, Asset, Keypair, Transaction, TransactionBuilder, Operation, nativeToScVal, StrKey} from '@stellar/stellar-sdk';
-import {runKeeper} from '../lib/keeper';
+import {availableKeeperXlm,runKeeper} from '../lib/keeper';
 import {putRecord, record, records} from '../lib/db';
 import {horizon, soroban, LEGACY_CONTRACT_ID, invoiceContract, pollOperation} from '../lib/stellar';
 import {syncERPInvoice} from '../lib/erp';
@@ -12,6 +12,7 @@ import {STELLAR} from '../lib/config';
 import type {ChainOperation, Invoice} from '../lib/types';
 process.env.DATABASE_PATH=join(mkdtempSync(join(tmpdir(),'centerp-keeper-')),'test.sqlite');
 function receiptEvent(invoice:Invoice,status:string){return {contractId:{value:StrKey.decodeContract(invoiceContract(invoice))},body:{v0:{topics:[nativeToScVal('changed'),nativeToScVal(invoice.merchant),nativeToScVal(Buffer.from(invoice.id,'hex'))],data:nativeToScVal({amount:10000000n,status:[status]})}}};}
+function mockReserve(){mock.method(horizon,'ledgers',()=>({order:()=>({limit:()=>({call:async()=>({records:[{base_reserve_in_stroops:5000000}]})})})}));}
 
 test('keeper persists a signed hash before sending and reconciles an ambiguous finalization without a second send',async()=>{
   const keeper=Keypair.random();process.env.ESCROW_KEEPER_SECRET=keeper.secret();
@@ -20,7 +21,8 @@ test('keeper persists a signed hash before sending and reconciles an ambiguous f
   const invoice:Invoice={id:'aa'.repeat(32),code:'TEST',merchant,buyer,resolver,amount:'1.0000000',buyerName:'Test buyer',description:'Timeout test',due:1,deliveryDue:2,commitment:'bb'.repeat(32),status:'delivered',version:2,contract,transactions:[],createdAt:Date.now()};
   putRecord('invoice',invoice.id,merchant,invoice);
   let chainStatus='Delivered';let sends=0;
-  mock.method(horizon,'loadAccount',async()=>new Account(keeper.publicKey(),'1'));
+  mock.method(horizon,'loadAccount',async()=>Object.assign(new Account(keeper.publicKey(),'1'),{balances:[{asset_type:'native',balance:'10000'}]}));
+  mockReserve();
   mock.method(soroban,'getAccount',async()=>new Account(keeper.publicKey(),'1'));
   mock.method(soroban,'simulateTransaction',async()=>({transactionData:{},result:{retval:nativeToScVal({merchant,buyer,resolver,amount:10000000n,commitment:Buffer.from(invoice.commitment,'hex'),status:[chainStatus],disputed_at:0n})}}));
   mock.method(soroban,'prepareTransaction',async (tx: Transaction)=>tx);
@@ -48,7 +50,8 @@ test('TTL heartbeat is a read transaction and never becomes payment evidence',as
   const invoice:Invoice={id:'cc'.repeat(32),code:'TTL',merchant,buyer,resolver,amount:'1.0000000',buyerName:'TTL buyer',description:'TTL test',due:Math.floor(Date.now()/1000)+600,deliveryDue:Math.floor(Date.now()/1000)+86400,commitment:'dd'.repeat(32),status:'funded',version:2,contract:new Asset('USDC',STELLAR.issuer).contractId(STELLAR.passphrase),transactions:[],createdAt:Date.now()};
   putRecord('invoice',invoice.id,merchant,invoice);
   let sends=0;
-  mock.method(horizon,'loadAccount',async()=>new Account(keeper.publicKey(),'1'));
+  mock.method(horizon,'loadAccount',async()=>Object.assign(new Account(keeper.publicKey(),'1'),{balances:[{asset_type:'native',balance:'10000'}]}));
+  mockReserve();
   mock.method(soroban,'getAccount',async()=>new Account(keeper.publicKey(),'1'));
   mock.method(soroban,'simulateTransaction',async()=>({transactionData:{},result:{retval:nativeToScVal({status:['Funded'],disputed_at:0n})}}));
   mock.method(soroban,'prepareTransaction',async (tx:Transaction)=>tx);
@@ -100,4 +103,11 @@ test('missing classic payments unlock only after Horizon has indexed beyond thei
     assert.equal((await pollOperation(payer,op.id)).status,'failed');
     assert.equal(record<ChainOperation>('operation',op.id).status,'failed');
   } finally {mock.restoreAll();}
+});
+
+test('keeper fee availability excludes reserve sponsorship and selling liabilities',()=>{
+  const balances=[{asset_type:'native',balance:'5.0000000',selling_liabilities:'1.0000000'}];
+  assert.equal(availableKeeperXlm({balances,subentry_count:2,num_sponsoring:2,num_sponsored:1},5000000).toString(),'1.5');
+  assert.equal(availableKeeperXlm({balances:[{asset_type:'native',balance:'1.0000000'}]},5000000).toString(),'0');
+  assert.equal(availableKeeperXlm({balances:[{asset_type:'native',balance:'1.0000000'}],num_sponsored:2},5000000).toString(),'1');
 });

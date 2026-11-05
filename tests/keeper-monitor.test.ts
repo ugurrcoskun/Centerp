@@ -1,0 +1,22 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import {mkdtempSync} from 'node:fs';
+import {join} from 'node:path';
+import {tmpdir} from 'node:os';
+import {readKeeperHealth,writeKeeperHeartbeat} from '../lib/keeper-monitor';
+import {putRecord,record} from '../lib/db';
+process.env.DATABASE_PATH=join(mkdtempSync(join(tmpdir(),'centerp-health-')),'test.sqlite');
+test('public keeper health is read-only and exposes only a valid heartbeat',async()=>{
+  process.env.CRON_SECRET='x'.repeat(64);process.env.ESCROW_KEEPER_SECRET='configured-for-read-check';
+  assert.deepEqual(await readKeeperHealth(),{status:'stale'});
+  await writeKeeperHeartbeat('ok');
+  const saved=record('keeper_health','escrow');
+  const fresh=await readKeeperHealth();assert.equal(fresh.status,'ok');assert.deepEqual(Object.keys(fresh).sort(),['checkedAt','status']);
+  assert.deepEqual(record('keeper_health','escrow'),saved);
+  putRecord('keeper_health','escrow','system',{checkedAt:Date.now()-31*3600000,status:'ok',privateDetail:'must not escape'});
+  const stale=await readKeeperHealth();assert.equal(stale.status,'stale');assert(!('privateDetail' in stale));
+  await writeKeeperHeartbeat('failed');assert.equal((await readKeeperHealth()).status,'failed');
+  putRecord('keeper_health','escrow','system',{checkedAt:'private-data',status:'ok'});
+  assert.deepEqual(await readKeeperHealth(),{status:'stale'});
+  delete process.env.CRON_SECRET;assert.deepEqual(await readKeeperHealth(),{status:'unconfigured'});
+});

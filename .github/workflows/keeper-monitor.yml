@@ -1,0 +1,19 @@
+name: Monitor escrow keeper
+on:
+  schedule:
+    - cron: '23 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: keeper-health-monitor
+  cancel-in-progress: true
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Check public heartbeat
+        run: |
+          curl --fail-with-body --silent --show-error --retry 2 --retry-all-errors --max-time 20 https://centerp.vercel.app/api/health/escrow > /tmp/keeper-health.json
+          jq -e '.status == "ok" and (.checkedAt | type == "number")' /tmp/keeper-health.json

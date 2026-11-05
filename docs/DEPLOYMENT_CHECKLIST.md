@@ -11,7 +11,7 @@ Bu işlem web uygulamasını yayınlar; Stellar ağı **Testnet** olarak kalır.
 - Yerel anahtarlar kalıcı olarak üretildi; yeniden başlatmada auth public key değişmedi.
 - Keeper için ayrı Testnet ücret hesabı fonlandı.
 - Eski şirket sahibi, aynı cüzdanın imzalı oturumuyla üyeliğini arayüzden etkinleştirebilir; farklı cüzdan bu seçeneği görmez.
-- Cron tanımı `/api/cron/escrow`, günlük `0 3 * * *` (İstanbul 06:00). Mevcut canlı deployment'ta cron tanımı henüz boş.
+- Cron tanımı `/api/cron/escrow`, günlük `0 3 * * *` (İstanbul 06:00). Takvim canlı proje metadatasından kontrol edilir.
 
 ## Production'a aktarılacak tam ayar listesi
 
@@ -31,15 +31,14 @@ Secret değerleri yalnızca `.env.local` içinden belleğe okunup Vercel API'ın
 
 Mevcut entegrasyon `ugurrcoskun/Centerp`, üretim dalı `main`. Çift yayın yerine bu otomatik akış kullanılacak. Kontrat kaynak doğrulaması ve uygulama/Rust CI başarılı; canlı yayın sonrası kontroller aşağıda izlenir.
 
-## Uygulama ve canlı kontrol sırası
+## Canlı kontrol
 
-1. Yukarıdaki yedi ayarı mevcut bağlı projeye yükle; API yanıtında başarısız anahtar olmadığını değerleri göstermeden kontrol et.
-2. Testleri geçen commit'i mevcut GitHub main → Vercel otomatik yayın akışına al; başarısız build mevcut canlı sürümün yerini almamalı.
-3. Hazır deployment'ı canlı alias'a geçir; public keşif dosyasının key/domain/ağ bilgisini doğrula.
-4. Canlı auth smoke: CORS, challenge imzası, JWT, replay ve yanlış domain reddi. Kalıcı DB üzerinden farklı proses/istekler arasında oturum/challenge kontrolü.
-5. Cron'a kimliksiz çağrının 401, geçerli secret ile çağrının uygun sonuç verdiğini doğrula. Vercel proje metadatasında günlük takvimi kontrol et.
-6. Keeper bakiye/hata izlemesini bağla; gerçek uyarı kanalı yoksa “operasyonel izleme tamamlandı” kutusunu kapatma. Yeni ücretli hizmet başlatma.
-7. Kullanıcıyla son ekran/iş akışı kontrolünü yap. Kullanıcı kontrolü otomatik teknik testlerle tamamlanmış sayılmaz.
+- [x] Yedi ortam değişkeni Vercel Production'da doğrulandı.
+- [x] `ca51004` GitHub `main` üzerinden otomatik yayınlandı. Canlı `stellar.toml`, yapılandırılan public key'i, domain'i ve Testnet ağını gösterdi.
+- [x] Canlı auth testi CORS, imza, JWT, replay ve domain kontrollerini geçti. Ayrı bir proses aynı Neon veritabanı üzerinden canlı challenge'ı oturuma çevirdi. Canlı uygulama oturumu kabul etti ve replay'i reddetti. [Test kanıtı](../artifacts/production-auth-proof.json)
+- [ ] Son keeper yayını sonrası cron yetkisini, Vercel takvimini ve sağlık kaydını doğrula.
+- [ ] Saatlik GitHub Actions sağlık kontrolünü canlı ortamda çalıştır.
+- [ ] Kullanıcıyla son ekran ve iş akışı kontrolünü yap.
 
 ## Üretim işletmesi için ayrıca açık kapılar
 

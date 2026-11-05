@@ -1,0 +1,13 @@
+{
+  "passedAt": "2026-11-05T13:47:39.974Z",
+  "origin": "https://centerp.vercel.app",
+  "publicKey": "GA55GHJKK2H7PWVQF4AJDZIBBVCYPPZDANPWMQL4HDH5XYDGG3KK4IMR",
+  "assertions": [
+    "production challenge verified",
+    "independent process exchanged challenge through persistent Neon",
+    "production accepted shared session",
+    "production rejected replay after cross-process exchange",
+    "test session logged out",
+    "no secrets or database URL emitted"
+  ]
+}

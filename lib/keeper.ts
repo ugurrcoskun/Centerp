@@ -1,10 +1,19 @@
 import {randomUUID, timingSafeEqual} from 'node:crypto';
+import Decimal from 'decimal.js';
 import {Address, Contract, Keypair, nativeToScVal, rpc, TransactionBuilder} from '@stellar/stellar-sdk';
 import {hydrateDatabase, persistDatabase, putRecord, records} from './db';
 import {STELLAR} from './config';
 import {invoiceContract, horizon, pollOperation, soroban, viewContract} from './stellar';
 import {settlementDue} from './escrow-policy';
 import type {ChainOperation, Invoice} from './types';
+type FeeAccount = {balances:{asset_type:string;balance:string;selling_liabilities?:string}[];subentry_count?:number;num_sponsoring?:number;num_sponsored?:number};
+export function availableKeeperXlm(account: FeeAccount, baseReserveStroops: number | string) {
+  const native = account.balances.find(b=>b.asset_type==='native');
+  const units = 2 + (account.subentry_count || 0) + (account.num_sponsoring || 0) - (account.num_sponsored || 0);
+  const reserve = new Decimal(baseReserveStroops);
+  if (!Number.isInteger(units) || units < 0 || !reserve.isFinite() || !reserve.isPositive()) throw new Error('Keeper rezerv bilgisi geçersiz.');
+  return new Decimal(native?.balance || 0).minus(native?.selling_liabilities || 0).minus(reserve.mul(units).div(10000000));
+}
 export function authorizeCron(header: string | null) {
   const secret = process.env.CRON_SECRET;
   if (!secret || secret.length < 32 || !header) return false;
@@ -17,6 +26,9 @@ export async function runKeeper() {
   if (!secret) throw new Error('ESCROW_KEEPER_SECRET yapılandırılmalı.');
   const signer = Keypair.fromSecret(secret);
   const account = signer.publicKey();
+  const [feeAccount, ledger] = await Promise.all([horizon.loadAccount(account), horizon.ledgers().order('desc').limit(1).call()]);
+  const feeBalance = availableKeeperXlm(feeAccount, ledger.records[0]?.base_reserve_in_stroops);
+  if (!feeBalance.isFinite() || feeBalance.lt(1)) throw new Error('Keeper harcanabilir işlem ücreti bakiyesi 1 Testnet XLM altında.');
   let revision = await hydrateDatabase();
   const report: {invoiceId: string; status: string; hash?: string; error?: string}[] = [];
   const operations = records<ChainOperation>('operation');

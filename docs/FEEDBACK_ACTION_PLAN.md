@@ -36,7 +36,7 @@ Bu dosya sekiz geri bildirimin ortak takip kaydıdır. Her aşamada önce uygula
 | 1 | Hukuki kapsam ve Türkiye ürün konumlandırması | P0 | Yok; dış hukuki değerlendirme üretim öncesi gerekir | [x] | [x] | [ ] |
 | 2 | Rust kontrat testlerini CI'a ekleme | P1 | Yok | [x] | [x] | [ ] |
 | 3 | Escrow zaman aşımı, itiraz ve kesin sonuçlandırma | P0 | 1'in ürün sınırı, 2; itiraz politikası kararı | [x] | [ ] | [ ] |
-| 4 | Sabit SEP-10 sunucu anahtarı ve stellar.toml | P1 | Yok; dağıtımda kalıcı secret gerekir | [x] | [ ] | [ ] |
+| 4 | Sabit SEP-10 sunucu anahtarı ve stellar.toml | P1 | Yok; dağıtımda kalıcı secret gerekir | [x] | [x] | [ ] |
 | 5 | Şirket üyeliği, roller ve işlem yetkileri | P1 | 4; şirket cüzdanı/imzacı modeli kararı | [x] | [x] | [ ] |
 | 6 | Açık kaynak lisansı | P2 | Hak sahipliği ve lisans seçiminin netleştirilmesi | [x] | [x] | [ ] |
 | 7 | Son kontratı Testnet'e dağıtma ve kaynak doğrulama | P1 | 3, 6; son kaynak sürümü ve toolchain | [x] | [x] | [ ] |
@@ -110,8 +110,8 @@ Bu aşama önce davranış tasarımı, ardından kodlama olarak ilerler. Yalnız
 - [x] Harici anchor anahtarı ile uygulama anahtarının farklı görevlerini belgeleyip ayrı tut.
 - [x] Challenge'ın sunucu imzası, domain/ağ, geçerlilik süresi ve tek kullanımlılık kontrollerini doğrula.
 - [x] Gerçek yerel production-server restart öncesi/sonrası public key aynı kaldı; auth smoke tekrar geçti. Anahtar rotasyon politikası yazıldı.
-- [ ] Gerçek çok sunuculu deployment ve kalıcı DB üzerinde challenge/session davranışını doğrula.
-- [ ] `.env.example`, yerel test yapılandırması ve dağıtım talimatlarını güncelle; gerçek ortam secret kurulumunu ayrıca doğrula.
+- [x] Canlı uygulama ve ayrı proses, Neon üzerinden aynı challenge ve oturumu başarıyla doğruladı. [Kanıt](../artifacts/production-auth-proof.json)
+- [x] Yerel yapılandırma ve dağıtım talimatları güncellendi. Vercel Production secret kurulumu ve canlı keşif dosyası doğrulandı.
 
 **Kabul:** Yeniden başlatma anahtarı değiştirmiyor; yayınlanan public key challenge imzasıyla eşleşiyor. Yanlış imza/domain/ağ, süresi geçmiş challenge ve replay reddediliyor.
 
@@ -202,7 +202,7 @@ Yeni satır biçimi: tarih, aşama, değişen dosya/commit, çalıştırılan ko
 
 Kullanıcının sonraki talimatıyla GitHub gönderimi onaylandı ve `codex/feedback-hardening` dalı yayınlandı. İlk kaynak attestation başarılı; indirilen WASM dağıtılmış kontratla birebir eşleşiyor. Güncel CI `465c0a4` için yeşil. Stellar Expert'in sabitlenmiş resmi release workflow'u ve explorer doğrulaması tamamlandı. Kullanıcının açık Production yayın onayıyla mevcut GitHub main → Vercel akışı kullanılacak; `.gitignore` değişikliği korunuyor.
 
-Vercel oturumu ve bağlı `centerp` projesi doğrulandı; mevcut canlı cron tanımları boş. Otomatik onay denetimi Production secret aktarımını ayrıca reddetti. Üç secret ve dört public ayar, kaynak/hedef ve sonraki kontroller [dağıtım listesinde](DEPLOYMENT_CHECKLIST.md) somut olarak yazıldı; tam kapsam için kullanıcıya tek onay sorusu iletildi. Kullanıcı açıkça onayladı; yedi ayar başarıyla aktarıldı ve Production/sensitive metadatası doğrulandı. Web yayını ve canlı smoke testleri sırada.
+Vercel oturumu ve bağlı `centerp` projesi doğrulandı; mevcut canlı cron tanımları boş. Otomatik onay denetimi Production secret aktarımını ayrıca reddetti. Üç secret ve dört public ayar, kaynak/hedef ve sonraki kontroller [dağıtım listesinde](DEPLOYMENT_CHECKLIST.md) somut olarak yazıldı; tam kapsam için kullanıcıya tek onay sorusu iletildi. Kullanıcı açıkça onayladı; yedi ayar başarıyla aktarıldı ve Production/sensitive metadatası doğrulandı. Web uygulaması `ca51004` ile canlıya alındı. Auth ve Neon oturum testleri geçti. Keeper izleme kontrolü sürüyor.
 
 ## Agent mimarisi ek işi
 
