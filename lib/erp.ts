@@ -4,6 +4,8 @@ import {z} from 'zod';
 import {amount} from './amount';
 import {accountFromRequest, publicKey, requireAccount} from './auth';
 import {db, deleteRecord, putRecord, record, records} from './db';
+import {assertMutation, assertWorkspaceAccess, audit, requirePermission, rolesFor, setMember} from './access';
+import type {AuditEntry, Membership, PaymentApproval} from './erp-types';
 import type {Invoice} from './types';
 import type {Company, Contact, Employee, ERPState, JournalEntry, OrderLine, Payable, Product, ProductionJob, PurchaseOrder, SalesOrder, StockMovement} from './erp-types';
 
@@ -18,6 +20,8 @@ const lineSchema = z.object({productId: z.string().uuid(), quantity: count, unit
 const mutationSchema = z.discriminatedUnion('action', [
   z.object({action: z.literal('company'), name: text}),
   z.object({action: z.literal('linkWallet')}),
+  z.object({action: z.literal('member'), account: wallet, roles: z.array(z.enum(['admin','billing','approver','operator','viewer'])).min(1).max(5), active: z.boolean()}),
+  z.object({action: z.literal('approvePayable'), id: z.string().uuid()}),
   z.object({action: z.literal('contact'), id: z.string().uuid().optional(), type: z.enum(['customer', 'vendor']), name: text, email: z.string().max(160).default(''), wallet}),
   z.object({action: z.literal('product'), sku: text, name: text, type: z.enum(['raw', 'finished']), quantity: z.number().int().min(0).max(100000), reorderPoint: z.number().int().min(0).max(100000), price: z.string().max(30)}),
   z.object({action: z.literal('sales'), contactId: z.string().uuid(), lines: z.array(lineSchema).min(1).max(20)}),
@@ -44,6 +48,7 @@ export function erpCompany(request: Request): Company {
   const session = record<{companyId: string; expires: number}>('erp_session', hashToken(token));
   if (session.expires < Date.now()) throw new Error('ERP oturumunun süresi doldu.');
   const company = record<Company>('erp_company', session.companyId);
+  assertWorkspaceAccess(company, request);
   // Preserve user-renamed companies; only migrate the former generated default.
   return company.name === 'Yeni şirketim'
     ? putRecord('erp_company', company.id, company.id, {...company, name: 'Comuchain'})
@@ -56,7 +61,7 @@ export function openERP(request: Request) {
     try {company = erpCompany(request);} catch {}
     if (company) {
       let dirty = false;
-      if (!process.env.ERP_DISABLE_DEFAULT_SEED && company.demoVersion !== 3) {
+      if (!company.wallet && !process.env.ERP_DISABLE_DEFAULT_SEED && company.demoVersion !== 3) {
         company = putRecord('erp_company', company.id, company.id, {...company, demo: true});
         mutateERP(request, {action: 'sample'});
         company = record<Company>('erp_company', company.id);
@@ -79,8 +84,20 @@ export function openERP(request: Request) {
   }
   return opened;
 }
+export function joinERP(request: Request, companyId: string) {
+  const account = requireAccount(request);
+  const company = requirePermission(companyId, account, 'view');
+  const token = randomBytes(48).toString('hex');
+  putRecord('erp_session', hashToken(token), company.id, {companyId: company.id, expires: Date.now() + 30 * 86400000});
+  audit(company.id, account, 'joinCompany');
+  return {company, token};
+}
 export function erpState(company: Company, request?: Request): ERPState {
-  return {company, connectedAccount: request ? accountFromRequest(request) : null,
+  const account = request ? accountFromRequest(request) : null;
+  const roles = rolesFor(company, account);
+  return {company, connectedAccount: account, roles,
+    members: roles.some(r => ['owner','admin'].includes(r)) ? scope<Membership>('member', company.id) : [],
+    audit: roles.some(r => ['owner','admin'].includes(r)) ? scope<AuditEntry>('audit', company.id).slice(0,100) : [],
     contacts: scope<Contact>('contact', company.id), products: scope<Product>('product', company.id),
     sales: scope<SalesOrder>('sales', company.id), purchases: scope<PurchaseOrder>('purchase', company.id),
     employees: scope<Employee>('employee', company.id), production: scope<ProductionJob>('production', company.id),
@@ -125,19 +142,32 @@ export function mutateERP(request: Request, raw: unknown) {
   const input = mutationSchema.parse(raw);
   const company = erpCompany(request);
   const companyId = company.id;
+  assertMutation(company, request, input.action);
   return transaction(() => {
     const id = randomUUID();
     const createdAt = Date.now();
+    audit(companyId, accountFromRequest(request) || 'anonymous-demo', input.action, 'id' in input ? input.id : undefined);
     switch (input.action) {
+      case 'member': return setMember(company, requireAccount(request), input.account, input.roles, input.active);
+      case 'approvePayable': {
+        const account = requireAccount(request);
+        requirePermission(companyId, account, 'approve');
+        const payable = companyRecord<Payable>('payable', input.id, companyId);
+        if (payable.status !== 'open') throw new Error('Bu borç zaten ödendi.');
+        const recipient = payable.type === 'vendor' ? companyRecord<Contact>('contact', payable.recipientId, companyId) : companyRecord<Employee>('employee', payable.recipientId, companyId);
+        const destination = publicKey(recipient.wallet);
+        if (destination === company.wallet) throw new Error('Alıcı şirket cüzdanından farklı olmalı.');
+        return put('approval', payable.id, companyId, {id, payableId: payable.id, companyId, actor: account, amount: payable.amount, recipient: destination, createdAt} satisfies PaymentApproval);
+      }
       case 'company': return putRecord('erp_company', companyId, companyId, {...company, name: input.name});
       case 'linkWallet': {
         const account = requireAccount(request);
         if (company.wallet && company.wallet !== account) throw new Error('Şirketin kayıtlı cüzdanını bağlayın. Bu sürüm cüzdan sahipliği devrini desteklemez.');
         const existing = records<Company>('erp_company').find(c => c.wallet === account && c.id !== companyId);
-        // A Freighter signature proves control of this account. Reassign it from
-        // stale mock workspaces instead of trapping the user in an old browser session.
-        if (existing) putRecord('erp_company', existing.id, existing.id, {...existing, wallet: null});
-        return putRecord('erp_company', companyId, companyId, {...company, wallet: account});
+        if (existing) throw new Error('Bu cüzdan başka şirkete bağlı. Üyelik ekranından o şirkete katılın.');
+        const member: Membership = {id: companyId + ':' + account, companyId, account, roles: ['owner'], active: true, createdAt};
+        put('member', member.id, companyId, member);
+        return putRecord('erp_company', companyId, companyId, {...company, wallet: account, ownerAccount: account});
       }
       case 'contact': {
         if (input.id) companyRecord<Contact>('contact', input.id, companyId);
@@ -360,7 +390,7 @@ export function mutateERP(request: Request, raw: unknown) {
 }
 export function orderForInvoice(request: Request, orderId: string, account: string) {
   const company = erpCompany(request);
-  if (company.wallet !== account) throw new Error('Faturayı oluşturmak için şirkete bağlı Stellar cüzdanını kullanın.');
+  requirePermission(company.id, account, 'invoice');
   const order = companyRecord<SalesOrder>('sales', orderId, company.id);
   if (order.status !== 'open' || order.invoiceId) throw new Error('Bu sipariş zaten faturaya bağlandı.');
   const contact = companyRecord<Contact>('contact', order.contactId, company.id);
@@ -372,7 +402,7 @@ export function attachInvoice(orderId: string, companyId: string, invoiceId: str
   if (order.invoiceId && order.invoiceId !== invoiceId) throw new Error('Sipariş zaten faturalanmış.');
   put('sales', order.id, companyId, {...order, invoiceId});
 }
-export function syncERPInvoice(invoice: Invoice, kind: string, hash: string) {
+export function syncERPInvoice(invoice: Invoice, kind: string, hash: string, updateStatus = true) {
   if (!invoice.erpCompanyId || !invoice.orderId) return;
   transaction(() => {
     const order = companyRecord<SalesOrder>('sales', invoice.orderId!, invoice.erpCompanyId!);
@@ -390,12 +420,13 @@ export function syncERPInvoice(invoice: Invoice, kind: string, hash: string) {
     if (entry) journal(company.id, invoice.id, kind, order.code + ' · ' + entry[0], entry[1], entry[2], invoice.amount, hash);
     if (kind === 'refund') journal(company.id, invoice.id, 'refund-reversal', order.code + ' · Satış iade kapatma', 'Satış gelirleri', 'Müşteri alacakları', invoice.amount, hash);
     const statuses: Partial<Record<Invoice['status'], SalesOrder['status']>> = {open: 'invoiced', released: 'settled', refunded: 'refunded', cancelled: 'cancelled', expired: 'cancelled'};
-    put('sales', order.id, company.id, {...order, status: statuses[invoice.status] || 'invoiced'});
+    if (updateStatus) put('sales', order.id, company.id, {...order, status: statuses[invoice.status] || 'invoiced'});
   });
 }
 export function payableForAnchor(companyId: string, payableId: string, account: string) {
   const company = record<Company>('erp_company', companyId);
   if (company.wallet !== account) throw new Error('Şirketin Stellar cüzdanını bağlayın.');
+  requirePermission(companyId, account, 'approve');
   const payable = companyRecord<Payable>('payable', payableId, companyId);
   if (payable.status !== 'open') throw new Error('Bu borç zaten ödendi.');
   return payable;
@@ -406,7 +437,11 @@ export function payableForPayment(companyId: string, payableId: string, account:
   if (!recipient.wallet) throw new Error(`Alıcının Stellar cüzdanı eksik. ERP’de ${payable.type === 'vendor' ? 'tedarikçi' : 'çalışan'} kaydına Testnet public key ekleyin.`);
   const destination = publicKey(recipient.wallet);
   if (destination === account) throw new Error('Alıcı cüzdanı şirket cüzdanından farklı olmalı.');
-  return {payable, destination};
+  let approval: PaymentApproval;
+  try {approval = record<PaymentApproval>('erp_approval', payable.id);} catch {throw new Error('Önce yetkili kullanıcı ERP ödemesini onaylamalı.');}
+  requirePermission(companyId, approval.actor, 'approve');
+  if (approval.amount !== payable.amount || approval.recipient !== destination || approval.createdAt + 86400000 <= Date.now()) throw new Error('Ödeme onayı geçersiz veya süresi doldu. Yeniden onaylayın.');
+  return {payable, destination, approval};
 }
 export function settlePayable(companyId: string, payableId: string, hash: string) {
   return transaction(() => {

@@ -7,7 +7,7 @@ import type {AnchorTransfer,BridgeState,ChainOperation,Invoice} from '../lib/typ
 import type {Company,Contact,Employee,ERPState,Payable,Product,ProductionJob,PurchaseOrder,SalesOrder} from '../lib/erp-types';
 const origin=process.env.APP_ORIGIN||'http://127.0.0.1:3000';
 const sleep=(ms:number)=>new Promise(resolve=>setTimeout(resolve,ms));
-class TestActor {
+export class TestActor {
   key=Keypair.random(); cookies=new Map<string,string>();
   header(){return [...this.cookies].map(([name,value])=>name+'='+value).join('; ');}
   remember(response:Response){for(const cookie of response.headers.getSetCookie()){const pair=cookie.split(';')[0];const index=pair.indexOf('=');this.cookies.set(pair.slice(0,index),pair.slice(index+1));}}
@@ -67,6 +67,8 @@ async function main(){
   const beforeRelease=await merchant.get<BridgeState>();
   assert.equal(beforeRelease.balances.usdc,'0.0000000');
   assert.equal(beforeRelease.invoices.find(i=>i.id===invoice.id)?.status,'funded');
+  const delivered=await merchant.operation('deliver',invoice.id);
+  assert.equal((await merchant.get<BridgeState>()).invoices.find(i=>i.id===invoice.id)?.status,'delivered');
   const released=await buyer.operation('release',invoice.id);
   const paidSale=await merchant.get<ERPState>(true);
   assert.equal(paidSale.sales.find(s=>s.id===sales.id)?.status,'settled');
@@ -79,6 +81,8 @@ async function main(){
   const vendorDebt=liabilities.payables.find(p=>p.sourceId===purchase.id)!;
   const salaryDebt=liabilities.payables.find(p=>p.recipientId===staff.id)!;
   await assert.rejects(()=>buyer.post('prepare',{kind:'erp_payment',payableId:vendorDebt.id}));
+  await merchant.post('approvePayable',{id:vendorDebt.id},true);
+  await merchant.post('approvePayable',{id:salaryDebt.id},true);
   const vendorPayment=await merchant.operation('erp_payment',undefined,vendorDebt.id);
   const staffPayment=await merchant.operation('erp_payment',undefined,salaryDebt.id);
   await assert.rejects(()=>merchant.operation('erp_payment',undefined,vendorDebt.id));
@@ -87,7 +91,7 @@ async function main(){
   assert.equal(finalWallet.balances.usdc,'1.5000000');
   assert(finalERP.payables.every(p=>p.status==='paid'&&p.hash));
   assert.equal(finalERP.journal.length,7);
-  const proof={passedAt:new Date().toISOString(),network:'TESTNET',companyId:company.id,merchant:merchant.key.publicKey(),customer:buyer.key.publicKey(),salesOrderId:sales.id,purchaseOrderId:purchase.id,productionJobId:job.id,invoiceId:invoice.id,depositId:deposit.id,depositHash:deposit.hash,invoiceCreateHash:registered.hash,escrowFundHash:funded.hash,escrowReleaseHash:released.hash,vendorPaymentHash:vendorPayment.hash,employeePaymentHash:staffPayment.hash,finalMerchantUSDC:finalWallet.balances.usdc,journalEntryCount:finalERP.journal.length,assertions:['isolated company session','company wallet proof','purchase receipt is unique','production consumes inputs and creates stock','sales total must match invoice','shipment does not release escrow','sale settled only after buyer-authorized chain release','duplicate payroll prevented','unauthorized payer rejected','vendor and employee paid on Stellar Testnet','paid liabilities cannot be paid twice','journal linked to real transaction hashes']};
-  mkdirSync('artifacts',{recursive:true});writeFileSync('artifacts/erp-testnet-proof.json',JSON.stringify(proof,null,2)+'\n');console.log(JSON.stringify(proof,null,2));
+  const proof={passedAt:new Date().toISOString(),network:'TESTNET',companyId:company.id,merchant:merchant.key.publicKey(),customer:buyer.key.publicKey(),salesOrderId:sales.id,purchaseOrderId:purchase.id,productionJobId:job.id,invoiceId:invoice.id,depositId:deposit.id,depositHash:deposit.hash,invoiceCreateHash:registered.hash,escrowFundHash:funded.hash,escrowReleaseHash:released.hash,escrowDeliveryHash:delivered.hash,vendorPaymentHash:vendorPayment.hash,employeePaymentHash:staffPayment.hash,finalMerchantUSDC:finalWallet.balances.usdc,journalEntryCount:finalERP.journal.length,assertions:['isolated company session','company wallet proof','purchase receipt is unique','production consumes inputs and creates stock','sales total must match invoice','shipment does not release escrow','sale settled only after buyer-authorized chain release','duplicate payroll prevented','unauthorized payer rejected','vendor and employee paid on Stellar Testnet','paid liabilities cannot be paid twice','journal linked to real transaction hashes']};
+  mkdirSync('artifacts',{recursive:true});writeFileSync('artifacts/erp-testnet-v2-proof.json',JSON.stringify(proof,null,2)+'\n');console.log(JSON.stringify(proof,null,2));
 }
-main().catch(error=>{console.error(error instanceof Error?error.message:'ERP integration failed');process.exitCode=1;});
+if(process.argv[1]?.endsWith('erp-testnet-smoke.ts')) main().catch(error=>{console.error(error instanceof Error?error.message:'ERP integration failed');process.exitCode=1;});

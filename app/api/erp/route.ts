@@ -2,7 +2,7 @@ import {NextResponse} from 'next/server';
 import {z} from 'zod';
 import {assertOrigin} from '@/lib/auth';
 import {hydrateDatabase, persistDatabase} from '@/lib/db';
-import {ERP_COOKIE, erpCompany, erpState, mutateERP, openERP} from '@/lib/erp';
+import {ERP_COOKIE, erpCompany, erpState, joinERP, mutateERP, openERP} from '@/lib/erp';
 import {parseRequestJson} from '@/lib/http';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -24,7 +24,15 @@ export async function POST(request: Request) {
     assertOrigin(request);
     const raw = await request.text();
     if (raw.length > 50000) throw new Error('İstek çok büyük.');
-    const result = mutateERP(request, parseRequestJson(raw));
+    const body = parseRequestJson(raw);
+    if (body && typeof body === 'object' && 'action' in body && body.action === 'joinCompany') {
+      const input = z.object({companyId: z.string().uuid()}).parse(body);
+      const joined = joinERP(request, input.companyId);
+      const response = await reply({result: {joined: true}}, revision);
+      response.cookies.set(ERP_COOKIE, joined.token, {httpOnly: true, sameSite: 'strict', secure: new URL(request.url).protocol === 'https:', path: '/', maxAge: 30 * 86400});
+      return response;
+    }
+    const result = mutateERP(request, body);
     return reply({result, state: erpState(erpCompany(request), request)}, revision);
   } catch (error) {return failure(error);}
 }

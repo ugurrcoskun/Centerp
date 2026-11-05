@@ -1,0 +1,19 @@
+{
+  "passedAt": "2026-11-05T12:55:48.916Z",
+  "network": "TESTNET",
+  "contract": "CDJKNS4FOHGESEKME27CQ4E4Z3CQ2JOF5W6ZEML63E47WFVNTZCANABZ",
+  "timeoutInvoiceId": "b2ea245922227b0141d12f9315ab485971e35cbe8deb1e63141da3d72611a4dc",
+  "timeoutRefundHash": "bf6b67d1a12cf00994ad6d96581b337bf0f2da05d08a6985db5088b61ca94b96",
+  "disputedInvoiceId": "3a6a923e7bae1faa370ef556ed2bee735c1f05c2e6cf1669a355dc48900895d3",
+  "disputeHash": "a3c4400ea56b8c417c06caa70c01234050ce67efa2e7d181c1f500f38e0d60b1",
+  "resolverRefundHash": "76ab7eb9cee791570681a6d0559e7ecc2551a6db175d8822ffef3236630a097d",
+  "buyerBalanceBefore": "1.9886659",
+  "buyerBalanceAfter": "1.9886659",
+  "assertions": [
+    "independent resolver address committed",
+    "missing delivery refunded by dedicated keeper",
+    "disputed escrow refunded by authorized resolver",
+    "resolution cannot replay",
+    "buyer balances restored exactly"
+  ]
+}

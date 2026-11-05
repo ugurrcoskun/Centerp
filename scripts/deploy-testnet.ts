@@ -1,9 +1,11 @@
 import {createHash, randomBytes} from 'node:crypto';
-import {existsSync, readFileSync, writeFileSync, mkdirSync} from 'node:fs';
+import {existsSync, readFileSync, writeFileSync, mkdirSync, copyFileSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
 import {Address, Asset, Keypair, Operation, rpc, scValToNative, TransactionBuilder, xdr} from '@stellar/stellar-sdk';
 import {STELLAR} from '../lib/config';
 
 async function main() {
+  if (process.env.NEXT_PUBLIC_STELLAR_NETWORK && process.env.NEXT_PUBLIC_STELLAR_NETWORK !== 'TESTNET') throw new Error('Bu araç yalnızca Testnet içindir.');
   const key = Keypair.random(); // Ephemeral deployment signer; never written to disk.
   const asset = new Asset('USDC', STELLAR.issuer);
   const token = asset.contractId(STELLAR.passphrase);
@@ -29,7 +31,7 @@ async function main() {
   try {await server.getContractData(token, xdr.ScVal.scvLedgerKeyContractInstance());} catch {
     await send(Operation.createStellarAssetContract({asset}));
   }
-  const wasm = readFileSync('contracts/invoice-escrow/target/wasm32v1-none/release/invoice_escrow.wasm');
+  const wasm = readFileSync(process.env.CONTRACT_WASM_PATH || 'contracts/invoice-escrow/target/wasm32v1-none/release/invoice_escrow.wasm');
   console.log('Uploading escrow Wasm to Testnet…');
   const upload = await send(Operation.uploadContractWasm({wasm}));
   const wasmHash = createHash('sha256').update(wasm).digest();
@@ -38,7 +40,10 @@ async function main() {
   if (!deploy.returnValue) throw new Error('Contract ID not returned by RPC.');
   const contractId = String(scValToNative(deploy.returnValue));
   mkdirSync('artifacts', {recursive: true});
-  const proof = {network: 'TESTNET', protocol: 28, contractId, token, issuer: STELLAR.issuer, wasmSha256: wasmHash.toString('hex'), uploadHash: upload.txHash, deploymentHash: deploy.txHash, deployedAt: new Date().toISOString()};
+  const sourceHash = createHash('sha256');
+  for (const path of ['contracts/invoice-escrow/src/lib.rs','contracts/invoice-escrow/Cargo.toml','contracts/invoice-escrow/Cargo.lock','rust-toolchain.toml']) sourceHash.update(readFileSync(path));
+  const proof = {network: 'TESTNET', protocol: 28, version: 2, contractId, token, issuer: STELLAR.issuer, wasmSha256: wasmHash.toString('hex'), sourceFilesSha256: sourceHash.digest('hex'), sourceCommit: execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(), sourceDirty: !!execFileSync('git',['status','--porcelain'],{encoding:'utf8'}).trim(), uploadHash: upload.txHash, deploymentHash: deploy.txHash, deployedAt: new Date().toISOString(), sourceVerification: 'pending-github-attestation'};
+  if (existsSync('artifacts/deployment.json') && !existsSync('artifacts/deployment-v1.json')) copyFileSync('artifacts/deployment.json','artifacts/deployment-v1.json');
   writeFileSync('artifacts/deployment.json', JSON.stringify(proof, null, 2) + '\n');
   const envPath = '.env.local';
   let envFile = existsSync(envPath) ? readFileSync(envPath, 'utf8') : '';

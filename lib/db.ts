@@ -104,6 +104,7 @@ export async function persistDatabase(expectedRevision?: number | null) {
   if (typeof expectedRevision !== 'number' || !Number.isSafeInteger(expectedRevision)) throw new Error('Kalıcı veri sürümü eksik. İsteği yenileyip tekrar deneyin.');
   const updated = await sql`UPDATE centerp_snapshot SET revision = revision + 1, payload = ${JSON.stringify(rows)}::jsonb WHERE id = 1 AND revision = ${expectedRevision} RETURNING revision`;
   if (!updated.length) throw new Error('Veriler başka bir işlem tarafından güncellendi. En güncel kayıtlar yüklendi; işlemi tekrar deneyin.');
+  return Number(updated[0].revision);
 }
 export function putRecord<T>(kind: string, id: string, account: string, record: T) {
   db().prepare('INSERT INTO records(kind,id,account,body) VALUES (?,?,?,?) ON CONFLICT(kind,id) DO UPDATE SET body=excluded.body').run(kind, id, account, JSON.stringify(record));

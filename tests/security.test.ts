@@ -1,0 +1,112 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import {mkdtempSync} from 'node:fs';
+import {join} from 'node:path';
+import {tmpdir} from 'node:os';
+import {Keypair, TransactionBuilder} from '@stellar/stellar-sdk';
+import {accountFromRequest, authKey, challenge, createSession} from '../lib/auth';
+import {STELLAR} from '../lib/config';
+import {erpCompany, erpState, joinERP, mutateERP, openERP} from '../lib/erp';
+import {authorizeInvoiceAction, requirePermission} from '../lib/access';
+import {putRecord, record} from '../lib/db';
+import {authorizeCron} from '../lib/keeper';
+import type {Company, Membership} from '../lib/erp-types';
+process.env.DATABASE_PATH=join(mkdtempSync(join(tmpdir(),'centerp-security-')),'test.sqlite');
+process.env.ERP_DISABLE_DEFAULT_SEED='1';
+function login(key:Keypair, cookie='') {
+  const proof=challenge(key.publicKey(),'localhost:3000');
+  const tx=TransactionBuilder.fromXDR(proof.xdr, STELLAR.passphrase); tx.sign(key);
+  const session=createSession(proof.id,tx.toXDR());
+  return new Request('http://localhost:3000/api/erp',{headers:{Cookie:`${cookie}; bridge_session=${session.token}`}});
+}
+function ownedWorkspace() {
+  const key=Keypair.random();
+  const opened=openERP(new Request('http://localhost:3000/api/erp'));
+  const cookie='erp_workspace='+opened.token;
+  const request=login(key,cookie);
+  const company=mutateERP(request,{action:'linkWallet'}) as Company;
+  return {key, cookie, request, company};
+}
+test('persistent SEP-10 key survives reloading and rejects missing configuration, tampering and server signature removal',()=>{
+  const secret=process.env.SEP10_SIGNING_SECRET!;
+  const key=Keypair.random();
+  const original=authKey().publicKey();
+  const proof=challenge(key.publicKey(),'localhost:3000');
+  assert.equal(authKey().publicKey(),original);
+  const unsigned=TransactionBuilder.fromXDR(proof.xdr,STELLAR.passphrase);
+  unsigned.signatures.splice(0); unsigned.sign(key);
+  assert.throws(()=>createSession(proof.id,unsigned.toXDR()));
+  assert.throws(()=>challenge(key.publicKey(),'attacker.example'));
+  delete process.env.SEP10_SIGNING_SECRET;
+  assert.throws(()=>authKey(),/SEP10_SIGNING_SECRET/);
+  process.env.SEP10_SIGNING_SECRET=secret;
+  assert.equal(authKey().publicKey(),original);
+  const signed=TransactionBuilder.fromXDR(proof.xdr,STELLAR.passphrase); signed.sign(key);
+  const session=createSession(proof.id,signed.toXDR());
+  const parts=session.token.split('.');
+  assert.equal(parts.length,3);
+  assert(authKey().verify(Buffer.from(parts[0]+'.'+parts[1]),Buffer.from(parts[2],'base64url')));
+  assert.equal(accountFromRequest(new Request('http://localhost',{headers:{Cookie:'bridge_session='+session.token}})),key.publicKey());
+  assert.throws(()=>createSession(proof.id,signed.toXDR()));
+});
+test('expired challenges and challenges issued by a rotated server key cannot establish sessions',()=>{
+  const key=Keypair.random();
+  const proof=challenge(key.publicKey(),'localhost:3000');
+  const item=record<{expires:number}>('auth_challenge',proof.id);
+  putRecord('auth_challenge',proof.id,key.publicKey(),{...item,expires:Date.now()-1});
+  const tx=TransactionBuilder.fromXDR(proof.xdr,STELLAR.passphrase); tx.sign(key);
+  assert.throws(()=>createSession(proof.id,tx.toXDR()),/süresi doldu/);
+  const fresh=challenge(key.publicKey(),'localhost:3000');
+  const signed=TransactionBuilder.fromXDR(fresh.xdr,STELLAR.passphrase); signed.sign(key);
+  const secret=process.env.SEP10_SIGNING_SECRET;
+  process.env.SEP10_SIGNING_SECRET=Keypair.random().secret();
+  try {assert.throws(()=>createSession(fresh.id,signed.toXDR()),/anahtarı/);} finally {process.env.SEP10_SIGNING_SECRET=secret;}
+});
+test('company roles reject direct mutations, cross-company cookies, privilege escalation and revoked membership',()=>{
+  const w=ownedWorkspace();
+  const viewer=Keypair.random();
+  const unrelated=Keypair.random();
+  mutateERP(w.request,{action:'member',account:viewer.publicKey(),roles:['viewer'],active:true});
+  const request=login(viewer,w.cookie);
+  assert.equal(erpCompany(request).id,w.company.id);
+  assert.throws(()=>mutateERP(request,{action:'company',name:'Hijacked'}),/rolünüz/);
+  assert.throws(()=>mutateERP(request,{action:'member',account:viewer.publicKey(),roles:['admin'],active:true}),/rolünüz/);
+  assert.throws(()=>mutateERP(request,{action:'contact',type:'customer',name:'Forbidden'}),/rolünüz/);
+  assert.throws(()=>requirePermission(w.company.id,viewer.publicKey(),'invoice'),/rolünüz/);
+  assert.throws(()=>requirePermission(w.company.id,viewer.publicKey(),'approve'),/rolünüz/);
+  assert.throws(()=>erpCompany(login(unrelated,w.cookie)),/rolünüz/);
+  assert.throws(()=>joinERP(login(unrelated),w.company.id),/rolünüz/);
+  const joined=joinERP(login(viewer),w.company.id);
+  assert.equal(erpCompany(login(viewer,'erp_workspace='+joined.token)).id,w.company.id);
+  mutateERP(w.request,{action:'member',account:viewer.publicKey(),roles:['viewer'],active:false});
+  assert.throws(()=>erpCompany(request),/rolünüz/);
+  assert.throws(()=>joinERP(login(viewer),w.company.id),/rolünüz/);
+  assert.throws(()=>mutateERP(w.request,{action:'member',account:w.key.publicKey(),roles:['viewer'],active:false}),/sahibinin/);
+  assert(record<Membership>('erp_member',w.company.id+':'+w.key.publicKey()).active);
+});
+test('billing and payment approval are different capabilities; existing wallets cannot be silently moved to another company',()=>{
+  const w=ownedWorkspace();const billing=Keypair.random();const approver=Keypair.random();
+  mutateERP(w.request,{action:'member',account:billing.publicKey(),roles:['billing'],active:true});
+  mutateERP(w.request,{action:'member',account:approver.publicKey(),roles:['approver'],active:true});
+  assert(requirePermission(w.company.id,billing.publicKey(),'invoice'));
+  assert.throws(()=>requirePermission(w.company.id,billing.publicKey(),'approve'));
+  assert(requirePermission(w.company.id,approver.publicKey(),'approve'));
+  assert.throws(()=>requirePermission(w.company.id,approver.publicKey(),'invoice'));
+  const opened=openERP(new Request('http://localhost'));
+  assert.throws(()=>mutateERP(login(w.key,'erp_workspace='+opened.token),{action:'linkWallet'}),/başka şirkete/);
+  assert.equal(record<Company>('erp_company',w.company.id).wallet,w.key.publicKey());
+  assert(erpState(w.company,w.request).audit.length>0);
+  assert.equal(erpState(w.company,login(billing,w.cookie)).audit.length,0);
+  putRecord('invoice','role-invoice',w.key.publicKey(),{id:'role-invoice',merchant:w.key.publicKey(),erpCompanyId:w.company.id});
+  assert.doesNotThrow(()=>authorizeInvoiceAction(w.key.publicKey(),'create','role-invoice'));
+});
+test('keeper endpoint requires its own long bearer secret',()=>{
+  const previous=process.env.CRON_SECRET;
+  process.env.CRON_SECRET='a'.repeat(64);
+  assert.equal(authorizeCron(null),false);
+  assert.equal(authorizeCron('Bearer wrong'),false);
+  assert.equal(authorizeCron('Bearer '+'a'.repeat(64)),true);
+  delete process.env.CRON_SECRET;
+  assert.equal(authorizeCron('Bearer '+'a'.repeat(64)),false);
+  if(previous)process.env.CRON_SECRET=previous;
+});

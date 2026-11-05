@@ -1,0 +1,50 @@
+name: Attest escrow source
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, codex/feedback-hardening]
+    paths:
+      - 'contracts/invoice-escrow/**'
+      - 'rust-toolchain.toml'
+      - '.github/workflows/contract-release.yml'
+permissions:
+  contents: read
+jobs:
+  attest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use pinned Rust
+        run: rustup show active-toolchain
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: contracts/invoice-escrow
+      - name: Test source before attesting
+        run: cargo test --locked --manifest-path contracts/invoice-escrow/Cargo.toml
+      - uses: stellar/stellar-cli@v28.1.0
+        with:
+          version: '28.1.0'
+      - name: Build with source metadata
+        run: stellar contract build --locked --manifest-path contracts/invoice-escrow/Cargo.toml --meta source_repo=github:ugurrcoskun/Centerp --meta home_domain=centerp.vercel.app --out-dir artifacts/verified
+      - uses: actions/upload-artifact@v4
+        with:
+          name: invoice-escrow-verified
+          path: artifacts/verified/invoice_escrow.wasm
+          if-no-files-found: error
+      - uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: artifacts/verified/invoice_escrow.wasm
+      - name: Request Stellar Expert source matching
+        env:
+          SOURCE_REPO: ${{ github.server_url }}/${{ github.repository }}
+          SOURCE_COMMIT: ${{ github.sha }}
+          SOURCE_RUN: ${{ github.run_id }}
+          SOURCE_JOB: ${{ github.job }}
+        run: |
+          HASH=$(sha256sum artifacts/verified/invoice_escrow.wasm | cut -d ' ' -f 1)
+          jq -n --arg repository "$SOURCE_REPO" --arg commitHash "$SOURCE_COMMIT" --arg runId "$SOURCE_RUN" --arg jobId "$SOURCE_JOB" --arg contractHash "$HASH" '{repository:$repository,commitHash:$commitHash,runId:$runId,jobId:$jobId,contractHash:$contractHash,relativePath:"contracts/invoice-escrow",packageName:"invoice-escrow"}' > /tmp/source-match.json
+          curl --fail-with-body --max-time 30 -H 'Content-Type: application/json' --data-binary @/tmp/source-match.json https://api.stellar.expert/explorer/public/contract-validation/match

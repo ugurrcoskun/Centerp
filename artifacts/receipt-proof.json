@@ -1,0 +1,42 @@
+{
+  "passedAt": "2026-11-05T13:06:55.768Z",
+  "assertions": [
+    "real Testnet receipt events parsed",
+    "receipt ledger order preserved",
+    "replay does not duplicate cash journal",
+    "only a disposable database clone changed",
+    "no new network transactions submitted"
+  ],
+  "checked": [
+    {
+      "invoiceId": "f588b7f9037b8de93da6fecd2ec8237ebaadc96ee2da8b13ca60290af33f201e",
+      "kind": "create",
+      "hash": "805cf9c1a3cf147ba7446a96f322271482f2fd590d0c588e537a742798e9fc1c"
+    },
+    {
+      "invoiceId": "f588b7f9037b8de93da6fecd2ec8237ebaadc96ee2da8b13ca60290af33f201e",
+      "kind": "fund",
+      "hash": "ca1918b69ec4c199a605ace3c6195fa78fade3b536bdd5774d53ed652c2bdad2"
+    },
+    {
+      "invoiceId": "f588b7f9037b8de93da6fecd2ec8237ebaadc96ee2da8b13ca60290af33f201e",
+      "kind": "deliver",
+      "hash": "492bd8f51b2ff6822b455fcfe7ff44f232d1c06fa50dccd1e8fe60f5e8ab5b7a"
+    },
+    {
+      "invoiceId": "f588b7f9037b8de93da6fecd2ec8237ebaadc96ee2da8b13ca60290af33f201e",
+      "kind": "release",
+      "hash": "3fae3184d3cda4f7962a6f7c1d588259dff1d165a8b9df1cebc42d2d060deef1"
+    },
+    {
+      "invoiceId": "3a6a923e7bae1faa370ef556ed2bee735c1f05c2e6cf1669a355dc48900895d3",
+      "kind": "resolve_refund",
+      "hash": "76ab7eb9cee791570681a6d0559e7ecc2551a6db175d8822ffef3236630a097d"
+    },
+    {
+      "invoiceId": "b2ea245922227b0141d12f9315ab485971e35cbe8deb1e63141da3d72611a4dc",
+      "kind": "finalize",
+      "hash": "bf6b67d1a12cf00994ad6d96581b337bf0f2da05d08a6985db5088b61ca94b96"
+    }
+  ]
+}

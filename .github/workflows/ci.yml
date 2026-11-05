@@ -22,7 +22,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Check types
         run: npm run typecheck
@@ -32,3 +32,29 @@ jobs:
 
       - name: Build production bundle
         run: npm run build
+
+  contract:
+    name: Verify escrow contract
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up pinned Rust toolchain
+        run: rustup show active-toolchain
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: contracts/invoice-escrow
+
+      - name: Run Rust contract tests
+        run: cargo test --locked --manifest-path contracts/invoice-escrow/Cargo.toml
+
+      - name: Set up Stellar CLI
+        uses: stellar/stellar-cli@v28.1.0
+        with:
+          version: '28.1.0'
+
+      - name: Build contract WASM
+        run: stellar contract build --locked --manifest-path contracts/invoice-escrow/Cargo.toml

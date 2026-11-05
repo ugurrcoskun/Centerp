@@ -1,12 +1,13 @@
 import {createHash, randomBytes} from 'node:crypto';
 import {NextResponse} from 'next/server';
 import {z} from 'zod';
-import {accountFromRequest, assertOrigin, challenge, COOKIE, createSession, logout, publicKey, requireAccount} from '@/lib/auth';
+import {accountFromRequest, assertOrigin, authOrigin, challenge, COOKIE, createSession, logout, publicKey, requireAccount} from '@/lib/auth';
 import {anchorChallenge, anchorLogin, discoverAnchor, isAnchorAuthenticated, refreshTransfer, requestQuote, simulateTransfer, startTransfer} from '@/lib/anchor';
 import {amount} from '@/lib/amount';
-import {attachInvoice, erpCompany, orderForInvoice, payableForAnchor, transaction} from '@/lib/erp';
+import {attachInvoice, erpCompany, orderForInvoice, payableForAnchor, payableForPayment, transaction} from '@/lib/erp';
 import {STELLAR} from '@/lib/config';
-import {hydrateDatabase, persistDatabase, putRecord, records} from '@/lib/db';
+import {hydrateDatabase, persistDatabase, putRecord, record, records} from '@/lib/db';
+import {accessibleCompanyIds, audit, authorizeInvoiceAction, authorizeOperation, requirePermission} from '@/lib/access';
 import {fetchJson, parseRequestJson} from '@/lib/http';
 import {balances, contractId, ownedInvoice, pollOperation, prepare, submit} from '@/lib/stellar';
 import type {AnchorTransfer, ChainOperation, Invoice} from '@/lib/types';
@@ -28,7 +29,7 @@ const actions = z.discriminatedUnion('action', [
   z.object({action: z.literal('transfer'), kind: z.enum(['deposit', 'withdraw']), amount: z.string().max(30), quoteId: idString.optional(), invoiceId: idString.optional(), payableId: z.string().uuid().optional()}),
   z.object({action: z.literal('simulate'), id: idString}),
   z.object({action: z.literal('pollAnchor'), id: idString}),
-  z.object({action: z.literal('prepare'), kind: z.enum(['trustline', 'withdraw_payment', 'create', 'fund', 'release', 'refund', 'cancel', 'expire', 'erp_payment']), invoiceId: idString.optional(), anchorId: idString.optional(), payableId: z.string().uuid().optional()}),
+  z.object({action: z.literal('prepare'), kind: z.enum(['trustline', 'withdraw_payment', 'create', 'fund', 'release', 'refund', 'cancel', 'expire', 'deliver', 'dispute', 'finalize', 'resolve_release', 'resolve_refund', 'erp_payment']), invoiceId: idString.optional(), anchorId: idString.optional(), payableId: z.string().uuid().optional()}),
   z.object({action: z.literal('submit'), id: idString, signedXdr: string}),
   z.object({action: z.literal('pollChain'), id: idString}),
 ]);
@@ -36,6 +37,7 @@ export async function GET(request: Request) {
   try {
     await hydrateDatabase();
     const account = accountFromRequest(request);
+    const companyIds = accessibleCompanyIds(request);
     const [wallet, health, discovery] = await Promise.allSettled([
       account ? balances(account) : Promise.resolve({xlm: '0', usdc: '0', trustline: false, funded: false}),
       fetchJson(`${STELLAR.anchor}/health`), discoverAnchor(),
@@ -44,7 +46,7 @@ export async function GET(request: Request) {
       balanceError: wallet.status === 'rejected' ? String(wallet.reason.message) : null,
       health: health.status === 'fulfilled' && discovery.status === 'fulfilled' ? health.value : null,
       anchorAuthenticated: account ? isAnchorAuthenticated(account) : false,
-      invoices: account ? records<Invoice>('invoice').filter(i => i.merchant === account || i.buyer === account) : [],
+      invoices: account ? records<Invoice>('invoice').filter(i => i.merchant === account || i.buyer === account || i.resolver === account || !!i.erpCompanyId && companyIds.includes(i.erpCompanyId)) : [],
       transfers: account ? records<AnchorTransfer>('anchor').filter(t => t.account === account) : [],
       operations: account ? records<ChainOperation>('operation').filter(o => o.account === account).map(({xdr: _xdr, ...op}) => op) : [],
     }, {headers: {'Cache-Control': 'no-store'}});
@@ -58,7 +60,7 @@ export async function POST(request: Request) {
     const raw = await request.text();
     if (raw.length > 100000) throw new Error('İstek çok büyük.');
     const input = actions.parse(parseRequestJson(raw));
-    if (input.action === 'challenge') return reply(challenge(publicKey(input.account), new URL(request.url).host), revision);
+    if (input.action === 'challenge') return reply(challenge(publicKey(input.account), new URL(authOrigin()).host), revision);
     if (input.action === 'session') {
       const session = createSession(input.id, input.signedXdr);
       const response = await reply({account: session.account}, revision);
@@ -71,24 +73,34 @@ export async function POST(request: Request) {
     const account = requireAccount(request);
     switch (input.action) {
       case 'friendbot': {
-        return reply(await fetchJson(`https://friendbot.stellar.org?addr=${account}`), revision);
+        return reply(await fetchJson(`https://friendbot.stellar.org?addr=${account}`, {signal: AbortSignal.timeout(60000)}), revision);
       }
       case 'anchorChallenge': return reply(await anchorChallenge(account), revision);
       case 'anchorLogin': return reply(await anchorLogin(account, input.signedXdr), revision);
       case 'createInvoice': {
+        const company = erpCompany(request);
+        requirePermission(company.id, account, 'invoice');
+        const merchant = company.wallet;
+        if (!merchant) throw new Error('Önce şirket sahibinin cüzdanını eşleştirin.');
+        const resolver = publicKey(process.env.ESCROW_RESOLVER_PUBLIC_KEY);
+        if ([merchant, input.buyer].includes(resolver)) throw new Error('Çözüm yetkilisi alıcı veya satıcı olamaz.');
         const erp = input.orderId ? orderForInvoice(request, input.orderId, account) : null;
         const buyer = publicKey(input.buyer);
         if (erp && (buyer !== erp.contact.wallet || amount(input.amount) !== erp.order.total)) throw new Error('Fatura müşterisi ve tutarı ERP siparişiyle eşleşmeli.');
         const now = Math.floor(Date.now() / 1000);
-        if (buyer === account) throw new Error('Müşteri ve satıcı cüzdanı farklı olmalı.');
+        if (buyer === merchant) throw new Error('Müşteri ve satıcı cüzdanı farklı olmalı.');
         if (input.due <= now + 60 || input.due > now + 366 * 86400 || input.deliveryDue < input.due || input.deliveryDue > now + 730 * 86400) throw new Error('Vade gelecekte, teslim tarihi de vadeden sonra olmalı.');
         const id = randomBytes(32).toString('hex');
         const canonical = amount(input.amount);
-        const snapshot = JSON.stringify({v: 1, network: STELLAR.passphrase, id, merchant: account, buyer, amount: canonical, due: input.due, deliveryDue: input.deliveryDue, description: input.description, ...(erp ? {orderId: erp.order.id, lines: erp.order.lines} : {})});
-        const invoice: Invoice = {id, code: `INV-${new Date().getFullYear()}-${id.slice(0, 6).toUpperCase()}`, merchant: account, buyer, buyerName: erp?.contact.name || input.buyerName, orderId: erp?.order.id, erpCompanyId: erp?.company.id, amount: canonical, description: input.description, due: input.due, deliveryDue: input.deliveryDue, commitment: createHash('sha256').update(snapshot).digest('hex'), status: 'draft', createdAt: Date.now(), transactions: []};
+        const snapshot = JSON.stringify({v: 2, network: STELLAR.passphrase, id, merchant, buyer, resolver, amount: canonical, due: input.due, deliveryDue: input.deliveryDue, description: input.description, ...(erp ? {orderId: erp.order.id, lines: erp.order.lines} : {})});
+        const invoice: Invoice = {id, code: `INV-${new Date().getFullYear()}-${id.slice(0, 6).toUpperCase()}`, merchant, buyer, buyerName: erp?.contact.name || input.buyerName, orderId: erp?.order.id, erpCompanyId: company.id, amount: canonical, description: input.description, due: input.due, deliveryDue: input.deliveryDue, commitment: createHash('sha256').update(snapshot).digest('hex'), status: 'draft', createdAt: Date.now(), transactions: []};
+        invoice.version = 2;
+        invoice.contract = contractId();
+        invoice.resolver = resolver;
         return reply(transaction(() => {
           if (erp) attachInvoice(erp.order.id, erp.company.id, invoice.id);
-          return putRecord('invoice', id, account, invoice);
+          audit(company.id, account, 'createInvoice', id);
+          return putRecord('invoice', id, merchant, invoice);
         }), revision);
       }
       case 'quote': return reply(await requestQuote(account, input.kind, input.amount), revision);
@@ -110,11 +122,21 @@ export async function POST(request: Request) {
       case 'simulate': return reply(await simulateTransfer(account, input.id), revision);
       case 'pollAnchor': return reply(await refreshTransfer(account, input.id), revision);
       case 'prepare': {
+        authorizeInvoiceAction(account, input.kind, input.invoiceId);
         const erp = input.kind === 'erp_payment' ? {companyId: erpCompany(request).id, payableId: input.payableId || ''} : undefined;
         if (erp && !erp.payableId) throw new Error('ERP borç kaydı gerekli.');
         return reply(await prepare(account, input.kind, input.invoiceId, input.anchorId, erp), revision);
       }
-      case 'submit': return reply(await submit(account, input.id, input.signedXdr), revision);
+      case 'submit': {
+        const operation = record<ChainOperation>('operation', input.id);
+        authorizeOperation(account, operation);
+        if (operation.status === 'prepared' && operation.erpCompanyId && operation.erpPayableId) payableForPayment(operation.erpCompanyId, operation.erpPayableId, account);
+        if (operation.invoiceId) {
+          const invoice = record<Invoice>('invoice', operation.invoiceId);
+          if (invoice.erpCompanyId) audit(invoice.erpCompanyId, account, operation.kind, operation.invoiceId);
+        }
+        return reply(await submit(account, input.id, input.signedXdr), revision);
+      }
       case 'pollChain': return reply(await pollOperation(account, input.id), revision);
     }
   } catch (error) { return failure(error); }

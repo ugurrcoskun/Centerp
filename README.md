@@ -16,7 +16,7 @@
 
   [![Soroban Escrow](https://img.shields.io/badge/Soroban-Escrow-20352D?style=flat-square)](artifacts/deployment.json)
   [![Anchor Standards](https://img.shields.io/badge/Anchor-SEP--1_%7C_SEP--6_%7C_SEP--10_%7C_SEP--38-C53D55?style=flat-square)](lib/anchor.ts)
-  [![Tests](https://img.shields.io/badge/tests-19_passing-20352D?style=flat-square)](tests)
+  [![Tests](https://img.shields.io/badge/tests-29_passing-20352D?style=flat-square)](tests)
   [![Stack](https://img.shields.io/badge/Next.js_15-TypeScript_%7C_Rust-111318?style=flat-square)](package.json)
 </div>
 
@@ -37,6 +37,10 @@ This creates three recurring problems:
 | **Slow, expensive settlement** | Legacy payment rails add waiting time, banking steps, fees and paperwork. |
 
 ---
+
+## Product scope in Türkiye
+
+Centerp currently runs exclusively on Testnet. TRY bank movements are simulated; direct USDC invoice, supplier and employee flows demonstrate the technology with test assets. The proposed Türkiye production scope is **TL anchor off-ramp and ERP reconciliation**, subject to review of the actual fund flow and provider permissions. Conversion to TL alone does not establish legal compliance. See [legal scope and production dependencies](docs/LEGAL_SCOPE.md).
 
 ## The Centerp solution
 
@@ -81,7 +85,7 @@ flowchart LR
 | **Live application** | [centerp.vercel.app](https://centerp.vercel.app) |
 | **108-second product walkthrough** | [Watch the full product demo](https://centerp.vercel.app/demo) |
 | **Project presentation** | [Open the Centerp presentation on Google Docs](https://docs.google.com/document/d/181gDA3zyJkbDmM3zG8s0Eg8ZCkskBm8swwbMOdkRyYc/edit?usp=sharing) |
-| **Deployed escrow contract** | [Open on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CCDPQPUS5SIBJF6YK2FZZV65P45U5FK7A3TMUE25T62VS3GQ22OG76IL) |
+| **Current v2 escrow contract** | [Open on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CDJKNS4FOHGESEKME27CQ4E4Z3CQ2JOF5W6ZEML63E47WFVNTZCANABZ) |
 | **Testnet execution evidence** | [`artifacts/testnet-proof.json`](artifacts/testnet-proof.json) |
 | **ERP-to-Stellar evidence** | [`artifacts/erp-testnet-proof.json`](artifacts/erp-testnet-proof.json) |
 
@@ -110,6 +114,10 @@ flowchart LR
 
 ---
 
+## Current v2 Testnet evidence
+
+The v2 contract is [CDJK…NABZ](https://stellar.expert/explorer/testnet/contract/CDJKNS4FOHGESEKME27CQ4E4Z3CQ2JOF5W6ZEML63E47WFVNTZCANABZ). [Deployment](artifacts/deployment.json) and [ERP workflow proof](artifacts/erp-testnet-v2-proof.json) identify the new network runs. Explorer source validation is tracked separately in the feedback checklist.
+
 ## From order to verifiable settlement
 
 ### 01 — Record the operation
@@ -126,7 +134,7 @@ The buyer can pay from an existing USDC balance or acquire Testnet USDC through 
 
 ### 04 — Deliver and release
 
-Shipping changes the ERP stock record but does not release the money. When the buyer confirms delivery, the contract releases USDC to the merchant.
+Shipping changes ERP stock separately. The merchant reports delivery on-chain before the delivery deadline. Buyer approval releases USDC immediately. Otherwise, reported delivery has a three-day dispute window after the delivery deadline. No delivery report enables a buyer refund; no dispute enables merchant release. Disputes have an independent resolver and a seven-day buyer-refund fallback. A fee-paying keeper or a manual transaction triggers deadline outcomes. See [escrow v2 rules and tradeoffs](docs/ESCROW_V2.md).
 
 ### 05 — Reconcile with proof
 
@@ -139,7 +147,16 @@ stateDiagram-v2
     Open --> Funded: Buyer funds exact USDC amount
     Open --> Cancelled: Merchant cancels before funding
     Open --> Expired: Due date passes
+    Funded --> Delivered: Merchant reports delivery before deadline
+    Funded --> Refunded: No delivery report at deadline
+    Delivered --> Released: No dispute after delivery deadline + 3 days
+    Delivered --> Disputed: Buyer disputes before cutoff
+    Funded --> Disputed: Buyer raises early dispute
+    Disputed --> Released: Resolver rules for merchant
+    Disputed --> Refunded: Resolver refunds or 7-day timeout
     Funded --> Released: Buyer approves delivery
+    Delivered --> Released: Buyer approves delivery
+    Disputed --> Released: Buyer voluntarily releases
     Funded --> Refunded: Merchant refunds buyer
 ```
 
@@ -222,16 +239,20 @@ The Rust contract has a deliberately small authorization surface:
 |---|---|---|
 | `create` | Merchant | Registers the invoice commitment and commercial terms |
 | `fund` | Buyer | Transfers the exact USDC amount into contract custody |
-| `release` | Buyer | Releases escrowed USDC to the merchant after approval |
+| `release` | Buyer | Voluntary full release in an active funded/delivered/disputed invoice |
+| `deliver` | Merchant | Records a delivery claim before the delivery deadline |
+| `dispute` | Buyer | Stops timeout merchant release and opens a bounded dispute |
+| `resolve_release` / `resolve_refund` | Fixed independent resolver | Selects merchant payment or buyer refund during the seven-day dispute period |
+| `finalize` | Anyone after the state deadline | Merchant release for undisputed delivery; buyer refund for absent delivery or silent resolver |
 | `refund` | Merchant | Returns the full escrow balance to the buyer |
 | `cancel` | Merchant | Closes an unfunded invoice |
 | `expire` | Permissionless after due date | Closes an overdue, unfunded invoice |
 
-The contract is initialized with a fixed USDC Stellar Asset Contract address and contains no fee extraction or hidden administrative release path.
+The contract has a fixed USDC asset and no fee extraction, upgrade or sweep path. Its explicitly disclosed per-invoice resolver can only choose the fixed buyer or merchant, within the dispute deadline. Delivery claims are not proof of physical delivery; the buyer must monitor the dispute window. The keeper requires deployment secrets, a funded fee account and operational monitoring.
 
 ---
 
-## Verifiable Testnet evidence
+## Historical v1 Testnet evidence
 
 The repository includes machine-readable artifacts from completed end-to-end runs.
 
@@ -249,6 +270,10 @@ The verified workflow covers signed sessions, trustlines, Anchor authentication 
 
 ---
 
+## Roadmap and release checks
+
+See the [roadmap](docs/ROADMAP.md), [feedback checklist](docs/FEEDBACK_ACTION_PLAN.md), [escrow v2 rules](docs/ESCROW_V2.md) and [legal scope](docs/LEGAL_SCOPE.md).
+
 ## Run locally
 
 ### Requirements
@@ -265,6 +290,7 @@ git clone https://github.com/ugurrcoskun/Centerp.git
 cd Centerp
 npm ci
 cp .env.example .env.local
+npm run setup:local
 npm run dev
 ```
 
@@ -274,11 +300,12 @@ Open `http://127.0.0.1:3000`.
 
 ```bash
 npm run typecheck        # TypeScript verification
-npm test                 # 19 application and workflow tests
+npm test                 # Application, access and worker tests
 npm run build            # Production build
 npm run contract:test    # Rust escrow tests
 npm run test:integration # Full Testnet flow; requires external services
 npm run test:erp         # ERP-to-Stellar Testnet flow
+npm run test:escrow:v2   # Real Testnet timeout and resolver checks
 ```
 
 ---
@@ -309,7 +336,7 @@ public/presentation.mp4      108-second narrated walkthrough
 
 Centerp is a hackathon MVP running on **Stellar Testnet**. The TRY bank-transfer experience is simulated by the external TR Mock Anchor; no real TRY or Mainnet assets are used.
 
-The accounting view is a management ledger for demonstrating source-linked reconciliation. It is not a statutory Turkish accounting, tax, payroll or e-invoicing system. Production deployment would additionally require organization membership and roles, recovery flows, audit logs, regulatory integrations, a production Anchor, background reconciliation workers and operational monitoring.
+The accounting view is a management ledger for demonstrating source-linked reconciliation. It is not a statutory Turkish accounting, tax, payroll or e-invoicing system. The revised prototype adds organization membership and roles, application audit records and an escrow keeper. Production still requires recovery flows, independent security review, reviewed regulatory/provider integrations, a real Anchor and operational monitoring. The keeper cron and persistent auth secrets must also be configured in the actual deployment environment.
 
 These boundaries are intentional: the prototype focuses on proving that real ERP events can safely drive verifiable Stellar settlement end to end.
 
@@ -319,3 +346,7 @@ These boundaries are intentional: the prototype focuses on proving that real ERP
   <p><strong>Built for the Rise In × Stellar Pro Hackathon 2026 — Genesis Track</strong></p>
   <p>Operations recorded. Payments protected. Settlement verified.</p>
 </div>
+
+## License
+
+Project source is available under the [MIT License](LICENSE), copyright Centerp contributors. Third-party dependencies and assets retain their own licenses.

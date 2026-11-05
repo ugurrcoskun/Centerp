@@ -5,14 +5,14 @@ import {ArrowRight, BadgeCheck, Boxes, Building2, Check, FileCheck2, Landmark, L
 const capabilities = [
   {className:'landing-card-light',number:'01',title:'Operasyon',text:'Satış, satın alma, stok, üretim ve çalışan kayıtları aynı iş zincirinde ilerler.',icon:Boxes},
   {className:'landing-card-red',number:'02',title:'Fatura',text:'Siparişten oluşan fatura; alıcı, tutar, vade ve teslim koşulunu birlikte taşır.',icon:ReceiptText},
-  {className:'landing-card-dark',number:'03',title:'Stellar ödeme',text:'Freighter imzası ve USDC escrow ile ödeme, teslim onayına kadar güvenle bekler.',icon:ShieldCheck},
+  {className:'landing-card-dark',number:'03',title:'Stellar ödeme',text:'Testnet escrow; teslim bildirimi, itiraz ve süre sonu kurallarıyla sonuçlanır.',icon:ShieldCheck},
   {className:'landing-card-paper',number:'04',title:'Mutabakat',text:'Doğrulanmış zincir işlemi ilgili ERP kaydına ve yönetim muhasebesi defterine bağlanır.',icon:BadgeCheck},
 ];
 
 const flow = [
   ['01','İş kaydını oluştur','Müşteri, ürün ve satış siparişi tek çalışma alanında oluşur.'],
   ['02','Faturayı Stellar’a taşı','Tutar ve cüzdan bilgisi yeniden yazılmadan finans modülüne geçer.'],
-  ['03','USDC’yi escrow’da koru','Ödeme Soroban sözleşmesine aktarılır; teslim gerçekleşene kadar bekler.'],
+  ['03','USDC’yi escrow’da koru','Testnet ödeme Soroban sözleşmesine aktarılır; onay, itiraz ve süre sonu kuralları uygulanır.'],
   ['04','Teslim et ve mutabık kal','Alıcı onayı parayı serbest bırakır, işlem kanıtı ERP defterine işlenir.'],
 ];
 
@@ -31,7 +31,7 @@ export default async function LandingPage({searchParams}:{searchParams:Promise<{
       <div className="landing-hero-copy">
         <div className="landing-kicker"><span>Stellar ile çalışan ERP</span><i>TESTNET</i></div>
         <h1>İşletmenin merkezi.<br/><em>Ödemenin kanıtı.</em></h1>
-        <p>Centerp, günlük operasyon kayıtlarını fatura, USDC ödeme ve zincir üstü mutabakatla aynı iş akışında birleştirir.</p>
+        <p>Centerp, ERP kayıtlarını Testnet ödeme kanıtlarıyla birleştirir. Türkiye için hedef, TL anchor çıkışı ve ERP mutabakatıdır; gerçek para kullanımı henüz açılmamıştır.</p>
         <div className="landing-actions"><Link className="landing-primary-action" href="/workspace">ERP’yi deneyimle <ArrowRight size={19}/></Link><a className="landing-text-action" href="#akis">Akışı incele <span aria-hidden="true">↓</span></a></div>
         <ul className="landing-proof-list" aria-label="Ürün özellikleri"><li><Check size={15}/> Freighter</li><li><Check size={15}/> Soroban escrow</li><li><Check size={15}/> TRY ↔ USDC</li></ul>
       </div>
@@ -52,13 +52,13 @@ export default async function LandingPage({searchParams}:{searchParams:Promise<{
     </section>
 
     <section className="landing-section landing-flow-section" id="akis">
-      <div className="landing-section-heading landing-section-heading-compact"><h2><span>Bir satışın</span><br/>Centerp yolculuğu.</h2><p>Operasyon tamamlanmadan para serbest kalmaz; ödeme tamamlanınca kanıt ilgili kayda döner.</p></div>
+      <div className="landing-section-heading landing-section-heading-compact"><h2><span>Bir satışın</span><br/>Centerp yolculuğu.</h2><p>Teslim bildirimi, alıcı onayı ve itiraz süreleri fonun sonucunu belirler; doğrulanan hareket ERP kaydına döner.</p></div>
       <div className="landing-flow-list">{flow.map(([number,title,text],index)=><article className={index===0?'active':''} key={number}><span>{number}</span><h3>{title}</h3><p>{text}</p><i aria-hidden="true">{index===0?'−':'+'}</i></article>)}</div>
     </section>
 
     <section className="landing-stellar" id="stellar">
-      <div className="landing-stellar-copy"><span className="landing-label">STELLAR KATMANI</span><h2>Ödeme, ERP’nin dışında kalan bir ayrıntı değil.</h2><p>Centerp, Türkiye’ye özel Anchor akışını, USDC bakiyesini ve Soroban escrow durumunu işletmenin gerçek kayıtlarıyla ilişkilendirir.</p><Link href="/finance">Finans modülünü incele <ArrowRight size={18}/></Link></div>
-      <div className="landing-stellar-grid"><div><WalletCards size={25}/><strong>TRY → USDC</strong><span>Mock Anchor ile yatırma ve çekme akışı</span></div><div><ShieldCheck size={25}/><strong>Koşullu ödeme</strong><span>Teslim onayına bağlı Soroban escrow</span></div><div><FileCheck2 size={25}/><strong>İşlem kanıtı</strong><span>Hash, fatura ve defter kaydı aynı yerde</span></div><div><Landmark size={25}/><strong>Mutabakat</strong><span>Finans hareketi operasyon kaydına geri döner</span></div></div>
+      <div className="landing-stellar-copy"><span className="landing-label">STELLAR KATMANI</span><h2>Ödeme, ERP’nin dışında kalan bir ayrıntı değil.</h2><p>Mock Anchor ile TL giriş/çıkış simülasyonu ve Testnet USDC hareketleri ERP kayıtlarıyla eşleşir. Üretim için gerçek sağlayıcı ve hukuki değerlendirme gerekir.</p><Link href="/finance">Finans modülünü incele <ArrowRight size={18}/></Link></div>
+      <div className="landing-stellar-grid"><div><WalletCards size={25}/><strong>TRY → USDC</strong><span>Mock Anchor ile yatırma ve çekme akışı</span></div><div><ShieldCheck size={25}/><strong>Koşullu ödeme</strong><span>Teslim, itiraz ve süre sonu kuralları</span></div><div><FileCheck2 size={25}/><strong>İşlem kanıtı</strong><span>Hash, fatura ve defter kaydı aynı yerde</span></div><div><Landmark size={25}/><strong>Mutabakat</strong><span>Finans hareketi operasyon kaydına geri döner</span></div></div>
     </section>
 
     <section className="landing-cta"><div><span className="landing-label">36 SAATLİK MVP · STELLAR TESTNET</span><h2>Operasyonu kaydet.<br/>Ödemeyi doğrula.</h2><p>Centerp çalışma alanında örnek şirket verileriyle uçtan uca akışı deneyimle.</p></div><div className="landing-cta-action"><Link href="/workspace">Centerp’i aç <ArrowRight size={20}/></Link><span><PackageCheck size={17}/> Kurulum gerektirmez</span></div><div className="landing-cta-figure" aria-hidden="true"><Building2/><Users/><span/></div></section>

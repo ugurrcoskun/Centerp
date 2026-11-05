@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import {loadEnvConfig} from '@next/env';
+import {Keypair, TransactionBuilder, WebAuth} from '@stellar/stellar-sdk';
+import {STELLAR} from '../lib/config';
+loadEnvConfig(process.cwd());
+const origin=process.env.APP_ORIGIN||'http://127.0.0.1:3000';
+async function main(){
+  const toml=await (await fetch(origin+'/.well-known/stellar.toml')).text();
+  const server=toml.match(/^SIGNING_KEY="([A-Z2-7]+)"$/m)?.[1];assert(server);
+  const endpoint=toml.match(/^WEB_AUTH_ENDPOINT="([^"]+)"$/m)?.[1];assert.equal(endpoint,origin+'/api/auth');
+  assert.equal(server,Keypair.fromSecret(process.env.SEP10_SIGNING_SECRET!).publicKey());
+  const client=Keypair.random();
+  const preflight=await fetch(endpoint!,{method:'OPTIONS',headers:{Origin:'https://wallet.example'}});assert.equal(preflight.status,204);
+  const response=await fetch(endpoint+'?account='+client.publicKey());
+  assert.equal(response.headers.get('access-control-allow-origin'),'*');
+  const proof=await response.json() as {transaction:string;network_passphrase:string};
+  assert.equal(proof.network_passphrase,STELLAR.passphrase);
+  WebAuth.readChallengeTx(proof.transaction,server!,STELLAR.passphrase,new URL(origin).host,new URL(origin).host);
+  const tx=TransactionBuilder.fromXDR(proof.transaction,STELLAR.passphrase);tx.sign(client);
+  const authenticate=()=>fetch(endpoint!,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({transaction:tx.toXDR()})});
+  const session=await authenticate();assert.equal(session.status,200);
+  const result=await session.json() as {token:string};
+  const parts=result.token.split('.');assert.equal(parts.length,3);
+  assert(Keypair.fromPublicKey(server!).verify(Buffer.from(parts[0]+'.'+parts[1]),Buffer.from(parts[2],'base64url')));
+  assert.equal(JSON.parse(Buffer.from(parts[1],'base64url').toString()).sub,client.publicKey());
+  assert.equal((await authenticate()).status,400);
+  assert.equal((await fetch(endpoint+'?account='+client.publicKey()+'&home_domain=attacker.example')).status,400);
+  const second=await (await fetch(origin+'/.well-known/stellar.toml')).text();assert.equal(toml,second);
+  console.log('PASS: published key, CORS, signed challenge, JWT, replay and wrong-domain rejection.');
+}
+main().catch(e=>{console.error(e instanceof Error?e.message:'Auth smoke failed');process.exitCode=1;});

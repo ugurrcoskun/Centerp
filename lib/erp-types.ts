@@ -1,4 +1,8 @@
-export interface Company {id: string; name: string; wallet: string | null; demo?: boolean; demoVersion?: number; createdAt: number}
+export type CompanyRole = 'owner' | 'admin' | 'billing' | 'approver' | 'operator' | 'viewer';
+export interface Membership {id: string; companyId: string; account: string; roles: CompanyRole[]; active: boolean; createdAt: number}
+export interface AuditEntry {id: string; companyId: string; actor: string; action: string; target?: string; createdAt: number}
+export interface PaymentApproval {id: string; companyId: string; payableId: string; actor: string; amount: string; recipient: string; createdAt: number}
+export interface Company {id: string; name: string; wallet: string | null; ownerAccount?: string; demo?: boolean; demoVersion?: number; createdAt: number}
 export interface Contact {id: string; companyId: string; type: 'customer' | 'vendor'; name: string; email: string; wallet: string; createdAt: number}
 export interface Product {id: string; companyId: string; sku: string; name: string; type: 'raw' | 'finished'; quantity: number; reorderPoint: number; price: string; createdAt: number}
 export interface OrderLine {productId: string; name: string; quantity: number; unitPrice: string; total: string}
@@ -9,4 +13,4 @@ export interface ProductionJob {id: string; companyId: string; code: string; out
 export interface Payable {id: string; companyId: string; code: string; type: 'vendor' | 'salary'; sourceId: string; recipientId: string; recipient: string; amount: string; status: 'open' | 'paid'; hash?: string; period?: string; createdAt: number}
 export interface StockMovement {id: string; companyId: string; productId: string; quantity: number; reason: string; sourceId: string; createdAt: number}
 export interface JournalEntry {id: string; companyId: string; sourceId: string; label: string; debit: string; credit: string; amount: string; hash?: string; createdAt: number}
-export interface ERPState {company: Company; connectedAccount: string | null; contacts: Contact[]; products: Product[]; sales: SalesOrder[]; purchases: PurchaseOrder[]; employees: Employee[]; production: ProductionJob[]; payables: Payable[]; movements: StockMovement[]; journal: JournalEntry[]}
+export interface ERPState {company: Company; connectedAccount: string | null; roles: CompanyRole[]; members: Membership[]; audit: AuditEntry[]; contacts: Contact[]; products: Product[]; sales: SalesOrder[]; purchases: PurchaseOrder[]; employees: Employee[]; production: ProductionJob[]; payables: Payable[]; movements: StockMovement[]; journal: JournalEntry[]}

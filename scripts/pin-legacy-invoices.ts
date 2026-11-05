@@ -1,0 +1,12 @@
+import {loadEnvConfig} from '@next/env';
+import {mkdirSync, writeFileSync} from 'node:fs';
+import {records, putRecord} from '../lib/db';
+import type {Invoice} from '../lib/types';
+import {LEGACY_CONTRACT_ID} from '../lib/stellar';
+loadEnvConfig(process.cwd());
+if (process.env.VERCEL || process.env.USE_NEON === 'true') throw new Error('Bu geçiş aracı yalnızca yerel veritabanı içindir.');
+const invoices = records<Invoice>('invoice').filter(i=>!i.contract);
+mkdirSync('output',{recursive:true});
+writeFileSync('output/legacy-invoices-backup.json', JSON.stringify(invoices,null,2)+'\n',{mode:0o600});
+for (const invoice of invoices) putRecord('invoice',invoice.id,invoice.merchant,{...invoice,contract:LEGACY_CONTRACT_ID,version:1});
+console.log(JSON.stringify({pinned:invoices.length,active:invoices.filter(i=>['open','funded'].includes(i.status)).length,contract:LEGACY_CONTRACT_ID,backup:'output/legacy-invoices-backup.json'}));

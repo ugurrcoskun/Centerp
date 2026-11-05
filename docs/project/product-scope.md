@@ -2,6 +2,10 @@
 
 > 18 Eylül 2026 kullanıcı düzeltmesi: Ana ürün şirketin ERP çalışma alanıdır. Stellar, bu ERP'nin ödeme, escrow ve mutabakat altyapısıdır. Önceki Invoice Bridge uygulaması finans modülü olarak korunmuştur.
 
+## Türkiye üretim kapsamı
+
+Mevcut para hareketleri yalnızca Testnet gösterimidir; TRY banka hareketleri simüledir. Türkiye için değerlendirilecek model TL anchor çıkışı ve ERP mutabakatıdır. Gerçek sağlayıcı entegrasyonu ve somut fon akışının hukuki değerlendirmesi henüz tamamlanmadı. Doğrudan USDC fatura, tedarikçi ve çalışan akışları Türkiye'de gerçek kripto ödeme hizmeti teklifi değildir. Ayrıntılar: [hukuki kapsam](../LEGAL_SCOPE.md).
+
 ## 1. Ürün neyi çözüyor?
 
 İşletmede müşteri siparişi, üretim, stok, tedarikçi borcu, çalışan ödeme planı ve tahsilat farklı kayıtlarda kopuk durmasın. Ortak şirket ve iş kaydı üzerinden bütün temel modüller birbirini beslesin. Para hareketi gerektiğinde şirketin cüzdanı Stellar Testnet ile işlemi imzalasın; doğrulanmış sonuç ERP'ye geri dönsün.
@@ -103,7 +107,7 @@ ERP çalışma alanı `erp_workspace` HttpOnly/SameSite cookie'sindeki güçlü 
 
 Stellar yetkisi ayrıca `bridge_session` ile doğrulanır. Şirket cüzdanını eşleştirmek ve para transferi hazırlamak için gerçek imzalı cüzdan oturumu gerekir. ERP cookie'si tek başına Stellar para hareketi yetkisi vermez.
 
-Bu model **yerel hackathon prototipine** uygundur; üyelik/davet, RBAC, şirket sahibi kurtarma akışı ve çok çalışanlı enterprise kimlik yönetimi yoktur. Tarayıcı cookie'si kaybedilirse aynı ERP çalışma alanına self-service giriş şu an bulunmaz. Yeni profil ayrı şirket oluşturur. Müşteri, finans modülünden kendisine ait Stellar faturalarını görebilir; satıcının ERP operasyon verilerini göremez.
+5 Kasım 2026 güncellemesi: İmzalı şirket üyeliği, role dayalı sunucu yetkileri, public key ile üye ekleme/iptal, şirket kimliğiyle üyelik doğrulayarak yeniden katılma ve uygulama denetim kaydı eklendi. Anonim çalışma alanı yalnızca izole demo içindir; sahiplenilen şirket imzalı üyelik gerektirir. Şirket sahibi anahtarı kurtarma/devretme ve kurumsal SSO henüz yoktur. Ayrıntılar: [kimlik ve yetkiler](../AUTH_AND_ROLES.md). Müşteri, finans modülünden kendisine ait Stellar faturalarını görebilir; satıcının ERP operasyon verilerini göremez.
 
 ## 6. Muhasebe kayıtları
 
@@ -130,9 +134,11 @@ Kayıt kimliği şirket + kaynak + olaydan türetilir; aynı doğrulama tekrarla
 
 ## 8. Doğrulama ve kanıt
 
-`npm test`: 11 TypeScript testi; şirket izolasyonu, decimal aritmetiği, imzalı oturum, DB, mal kabulü, atomik sevkiyat/üretim, dönem borcu tekilliği, ERP fatura ve ödeme eşleşmesi.
+`npm test`: güncel test sayısı ve sonuçlar [takip planında](../FEEDBACK_ACTION_PLAN.md); şirket izolasyonu, decimal aritmetiği, imzalı oturum, DB, mal kabulü, atomik sevkiyat/üretim, dönem borcu tekilliği, ERP fatura ve ödeme eşleşmesi.
 
-`npm run contract:test`: mevcut escrow için 6 Rust testi.
+`npm run contract:test`: escrow v2 için 12 Rust testi.
+
+Escrow v2 teslim bildirimi, 3 günlük itiraz, bağımsız hakem ve 7 günlük sessiz hakem iadesi içerir. Kurallar: [escrow v2](../ESCROW_V2.md).
 
 `npm run test:erp`: iki yeni geçici Testnet hesabıyla ERP → Stellar uçtan uca test.
 
@@ -151,6 +157,6 @@ Public kanıt: [artifacts/erp-testnet-proof.json](artifacts/erp-testnet-proof.js
 
 ## 9. Sonraki kapsam
 
-Öncelik sırasıyla: şirket üyeliği ve rol yetkisi, session kurtarma, business audit log, satış/tedarik onay adımları, fiziksel iade, kısmi teslimat, lot/seri/depo, maliyetlendirme, gerçek ERP adapter'ı ve export. Bunlar mevcut hackathon prototipinde tamamlanmış özellik gibi sunulmaz.
+Güncel üyelik/rol ve uygulama audit kaydı eklendi. Sonraki kapsam: sahip cüzdanı kurtarma, değişmez audit arşivi, satış/tedarik onay adımları, fiziksel iade, kısmi teslimat, lot/seri/depo, maliyetlendirme, gerçek ERP adapter'ı ve export. Bunlar mevcut hackathon prototipinde tamamlanmış özellik gibi sunulmaz.
 
-Stellar kısmında: gönderim journal'ı, webhook/worker ile arka planda mutabakat, çok imzalı şirket hesabı, toplu ödeme, fee sponsorship ve ileride gerçek anchor entegrasyonu. Şimdiki ağ yalnızca Testnet'tir.
+Stellar kısmında: gönderim journal'ı, worker kapasitesi ve izleme, webhook ile mutabakat, çok imzalı şirket hesabı, toplu ödeme, fee sponsorship ve ileride gerçek anchor entegrasyonu. Şimdiki ağ yalnızca Testnet'tir.

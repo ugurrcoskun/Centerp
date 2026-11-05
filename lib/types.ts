@@ -1,9 +1,11 @@
-export type InvoiceStatus = 'draft' | 'open' | 'funded' | 'released' | 'refunded' | 'cancelled' | 'expired';
+export type InvoiceStatus = 'draft' | 'open' | 'funded' | 'delivered' | 'disputed' | 'released' | 'refunded' | 'cancelled' | 'expired';
 export interface Invoice {
   id: string; code: string; merchant: string; buyer: string; buyerName: string;
   amount: string; description: string; due: number; deliveryDue: number;
   commitment: string; status: InvoiceStatus; createdAt: number;
   orderId?: string; erpCompanyId?: string;
+  contract?: string; version?: number; resolver?: string; disputedAt?: number;
+  lastLedger?: number; lastOrder?: number;
   transactions: {kind: string; hash: string}[];
 }
 export interface AnchorTransfer {
@@ -16,6 +18,7 @@ export interface ChainOperation {
   id: string; account: string; kind: string; invoiceId?: string; anchorId?: string;
   xdr: string; hash: string; status: 'prepared' | 'pending' | 'success' | 'failed';
   erpPayableId?: string; erpCompanyId?: string;
+  paymentApprovalId?: string;
   createdAt: number; error?: string;
 }
 export interface BridgeState {

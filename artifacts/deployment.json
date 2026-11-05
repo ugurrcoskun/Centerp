@@ -1,11 +1,16 @@
 {
   "network": "TESTNET",
   "protocol": 28,
-  "contractId": "CCDPQPUS5SIBJF6YK2FZZV65P45U5FK7A3TMUE25T62VS3GQ22OG76IL",
+  "version": 2,
+  "contractId": "CDJKNS4FOHGESEKME27CQ4E4Z3CQ2JOF5W6ZEML63E47WFVNTZCANABZ",
   "token": "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
   "issuer": "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
-  "wasmSha256": "9f68b6515e15a977570eddf3521e939796450ee3f52845c7e7de9a5bbe210a28",
-  "uploadHash": "66c31adeff9a20771d97ade9546c18abb18be658a4073b180690579d441a70f1",
-  "deploymentHash": "7a6bc9fe8e942c63aa99a0ead77aaeff631d40fc411410a7447c4c7bf08f8d99",
-  "deployedAt": "2026-09-18T18:34:48.182Z"
+  "wasmSha256": "83ef135ba7680cec7677fa742dfbb7f81d8aff8de5fe3fdf4460fa5d297cad58",
+  "sourceFilesSha256": "64756821fbf7bd5ac772f8b0f6301afd8972428424fb3554302c47bf7d942a0a",
+  "sourceCommit": "bb2c406979e463ac834faadac08303acd27b0782",
+  "sourceDirty": true,
+  "uploadHash": "d8f21ac3188569ed13dfcce4e0c757bd18e255fd91b8914d08fe8cc19b972fad",
+  "deploymentHash": "aa22b551d927de6fa66aca1d99aa126d172a8cd1943be58958f83d845ce7a5e7",
+  "deployedAt": "2026-11-05T12:38:38.587Z",
+  "sourceVerification": "pending-github-attestation"
 }

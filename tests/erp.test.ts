@@ -26,7 +26,7 @@ function bind(w:ReturnType<typeof workspace>) {
   const session=createSession(proof.id,tx.toXDR());
   const request=new Request('http://localhost:3000/api/erp',{headers:{Cookie:w.request.headers.get('cookie')+'; bridge_session='+session.token}});
   const company=mutateERP(request,{action:'linkWallet'}) as Company;
-  return {...w,company,request,key};
+  return {...w,company,request,key,change:(action:string,params:Record<string,unknown>={})=>mutateERP(request,{action,...params})};
 }
 const contact=(w:ReturnType<typeof workspace>,type:'customer'|'vendor',key='')=>w.change('contact',{type,name:type==='customer'?'Müşteri':'Tedarikçi',wallet:key}) as Contact;
 const product=(w:ReturnType<typeof workspace>,sku:string,quantity:number,price='1')=>w.change('product',{sku,name:sku,type:'raw',quantity,reorderPoint:2,price}) as Product;
@@ -131,7 +131,7 @@ test('sales totals bind to company wallet and journals transition only with veri
   const w=bind(workspace());const buyer=Keypair.random();const customer=contact(w,'customer',buyer.publicKey());const item=product(w,'FINISHED',3);
   const sale=w.change('sales',{contactId:customer.id,lines:[{productId:item.id,quantity:3,unitPrice:'0.1'}]}) as SalesOrder;
   assert.equal(sale.total,'0.3000000');
-  assert.throws(()=>orderForInvoice(w.request,sale.id,buyer.publicKey()),/şirkete bağlı/);
+  assert.throws(()=>orderForInvoice(w.request,sale.id,buyer.publicKey()),/şirket rolünüz/);
   assert.equal(orderForInvoice(w.request,sale.id,w.key.publicKey()).order.id,sale.id);
   const invoice:Invoice={id:'a'.repeat(64),code:'TEST',merchant:w.key.publicKey(),buyer:buyer.publicKey(),buyerName:customer.name,amount:sale.total,description:'Test',due:1,deliveryDue:2,commitment:'b'.repeat(64),createdAt:Date.now(),status:'open',transactions:[],erpCompanyId:w.company.id,orderId:sale.id};
   attachInvoice(sale.id,w.company.id,invoice.id);
@@ -151,6 +151,8 @@ test('payable settlement requires company wallet, recipient key and an immutable
   w.change('receive',{id:purchase.id});
   const payable=snapshot(w).payables[0];
   assert.throws(()=>payableForPayment(w.company.id,payable.id,recipient.publicKey()),/Şirketin Stellar/);
+  assert.throws(()=>payableForPayment(w.company.id,payable.id,w.key.publicKey()),/onaylamalı/);
+  w.change('approvePayable',{id:payable.id});
   assert.equal(payableForPayment(w.company.id,payable.id,w.key.publicKey()).destination,recipient.publicKey());
   settlePayable(w.company.id,payable.id,'payment-hash');
   settlePayable(w.company.id,payable.id,'payment-hash');
@@ -167,6 +169,26 @@ test('Anchor bank instructions do not require the recipient wallet before final 
   const payable=snapshot(w).payables[0];
   assert.equal(payableForAnchor(w.company.id,payable.id,w.key.publicKey()).id,payable.id);
   assert.throws(()=>payableForPayment(w.company.id,payable.id,w.key.publicKey()),/Alıcının Stellar cüzdanı eksik/);
+});
+
+test('payment approvals bind the recipient and expire when the reviewer is revoked',()=>{
+  const w=bind(workspace());const recipient=Keypair.random();const reviewer=Keypair.random();
+  const vendor=contact(w,'vendor',recipient.publicKey());const item=product(w,'REVIEW',0);
+  const purchase=w.change('purchase',{contactId:vendor.id,lines:[{productId:item.id,quantity:1,unitPrice:'1'}]}) as PurchaseOrder;
+  w.change('receive',{id:purchase.id});const payable=snapshot(w).payables[0];
+  w.change('member',{account:reviewer.publicKey(),roles:['approver'],active:true});
+  const proof=challenge(reviewer.publicKey(),'localhost:3000');
+  const tx=TransactionBuilder.fromXDR(proof.xdr,STELLAR.passphrase);tx.sign(reviewer);
+  const session=createSession(proof.id,tx.toXDR());
+  const reviewRequest=new Request('http://localhost:3000',{headers:{Cookie:w.request.headers.get('cookie')!.split('; bridge_session=')[0]+'; bridge_session='+session.token}});
+  mutateERP(reviewRequest,{action:'approvePayable',id:payable.id});
+  assert.equal(payableForPayment(w.company.id,payable.id,w.key.publicKey()).approval.actor,reviewer.publicKey());
+  w.change('contact',{id:vendor.id,type:'vendor',name:vendor.name,wallet:Keypair.random().publicKey()});
+  assert.throws(()=>payableForPayment(w.company.id,payable.id,w.key.publicKey()),/onayı geçersiz/);
+  mutateERP(reviewRequest,{action:'approvePayable',id:payable.id});
+  assert(payableForPayment(w.company.id,payable.id,w.key.publicKey()).approval);
+  w.change('member',{account:reviewer.publicKey(),roles:['approver'],active:false});
+  assert.throws(()=>payableForPayment(w.company.id,payable.id,w.key.publicKey()),/rolünüz/);
 });
 
 test('TRY-linked ERP payments use the Anchor quote USDC output, never the TRY face value',()=>{

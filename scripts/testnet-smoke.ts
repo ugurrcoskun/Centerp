@@ -41,6 +41,12 @@ async function main() {
   console.log('Opening two signed app sessions and funding Testnet accounts…');
   await Promise.all([merchant.login(), buyer.login()]);
   await Promise.all([merchant.post('friendbot'), buyer.post('friendbot')]);
+  const workspace = await fetch(`${origin}/api/erp`, {headers:{Cookie:merchant.cookie}});
+  await readApiJson(workspace);
+  const erpCookie=workspace.headers.get('set-cookie')?.split(';')[0];
+  if(erpCookie)merchant.cookie+='; '+erpCookie;
+  const bind=await fetch(`${origin}/api/erp`,{method:'POST',headers:{'Content-Type':'application/json',Origin:origin,Cookie:merchant.cookie},body:JSON.stringify({action:'linkWallet'})});
+  await readApiJson(bind);
   const trustlines = await Promise.all([merchant.operation('trustline'), buyer.operation('trustline')]);
   console.log('Authenticating with TR Mock Anchor; requesting locked TRY → USDC quote…');
   await Promise.all([merchant.anchorLogin(), buyer.anchorLogin()]);
@@ -68,7 +74,7 @@ async function main() {
   const paid = await merchant.operation('withdraw_payment', undefined, withdraw.id);
   withdraw = await merchant.pollTransfer(withdraw);
   const proof = {passedAt: new Date().toISOString(), network: 'TESTNET', origin, contractId: settled.contract, merchant: merchant.key.publicKey(), buyer: buyer.key.publicKey(), invoiceId: invoice.id, invoiceCode: invoice.code, trustlineHashes: trustlines.map(tx => tx.hash), createHash: created.hash, depositId: deposit.id, depositHash: deposit.hash, fundHash: funded.hash, releaseHash: released.hash, withdrawId: withdraw.id, withdrawPaymentHash: paid.hash, assertions: ['signed app sessions', 'USDC trustlines', 'SEP-1 discovery', 'SEP-10 anchor auth', 'SEP-38 locked quotes', 'SEP-6 deposit-exchange', 'mock bank simulation', 'on-chain escrow funding', 'no merchant receipt before release', 'buyer-authorized release', 'duplicate release rejected', 'SEP-6 withdraw-exchange', 'memo-id USDC payment', 'anchor completed withdrawals']};
-  mkdirSync('artifacts', {recursive: true}); writeFileSync('artifacts/testnet-proof.json', JSON.stringify(proof, null, 2) + '\n');
+  mkdirSync('artifacts', {recursive: true}); writeFileSync('artifacts/testnet-v2-proof.json', JSON.stringify(proof, null, 2) + '\n');
   console.log(JSON.stringify(proof, null, 2));
 }
 main().catch(error => {console.error(error instanceof Error ? error.message : 'Integration test error'); process.exitCode = 1;});

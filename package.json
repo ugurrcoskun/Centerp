@@ -7,13 +7,17 @@
     "build": "next build",
     "start": "next start --hostname 127.0.0.1",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test tests/*.test.ts",
-    "contract:test": "sh scripts/toolchain.sh cargo test --manifest-path contracts/invoice-escrow/Cargo.toml",
-    "contract:build": "sh scripts/toolchain.sh stellar contract build --manifest-path contracts/invoice-escrow/Cargo.toml",
+    "test": "node --import tsx --import ./tests/setup.ts --test tests/*.test.ts",
+    "contract:test": "sh scripts/toolchain.sh cargo test --locked --manifest-path contracts/invoice-escrow/Cargo.toml",
+    "contract:build": "sh scripts/toolchain.sh stellar contract build --locked --meta source_repo=github:ugurrcoskun/Centerp --meta home_domain=centerp.vercel.app --manifest-path contracts/invoice-escrow/Cargo.toml",
     "test:integration": "node --import tsx scripts/testnet-smoke.ts",
     "contract:deploy": "node --import tsx scripts/deploy-testnet.ts",
     "test:erp": "node --import tsx scripts/erp-testnet-smoke.ts",
-    "db:seed:neon": "node --import tsx scripts/seed-neon.ts"
+    "db:seed:neon": "node --import tsx scripts/seed-neon.ts",
+    "setup:local": "node --import tsx scripts/init-local-secrets.ts",
+    "escrow:keeper": "node --import tsx scripts/escrow-keeper.ts",
+    "test:escrow:v2": "node --import tsx scripts/escrow-v2-smoke.ts",
+    "test:auth": "node --import tsx scripts/auth-smoke.ts"
   },
   "dependencies": {
     "@creit.tech/stellar-wallets-kit": "2.6.0",
@@ -47,5 +51,6 @@
   },
   "overrides": {
     "@emnapi/wasi-threads": "1.2.2"
-  }
+  },
+  "license": "MIT"
 }

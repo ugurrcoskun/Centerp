@@ -1,0 +1,16 @@
+{
+  "passedAt": "2026-11-05T12:54:00.847Z",
+  "companyId": "66756554-fb81-4c68-8601-7d72475a09a0",
+  "assertions": [
+    "signed membership required",
+    "billing creates draft for company wallet",
+    "approver cannot create invoice",
+    "billing cannot approve payment",
+    "approver can approve payment",
+    "revocation applies to existing cookie",
+    "viewer cannot rename or escalate",
+    "outsider cannot join with company ID",
+    "workspace cookie without matching signed member rejected",
+    "member and audit data limited to managers"
+  ]
+}

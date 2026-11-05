@@ -1444,3 +1444,13 @@ td { border-color: color-mix(in srgb, var(--border) 24%, transparent); }
   .sidebar .finance-workspace strong { font-size: 12px; }
   .sidebar .finance-workspace span { margin-top: 5px; font-size: 9px; }
 }
+
+/* Feedback hardening: scope notices and company access use existing tokens. */
+.scope-banner { margin-bottom: 24px; }
+.company-access-panel > .erp-field-help { padding: 0 24px 20px; margin: 0; line-height: 1.7; }
+.company-access-panel > .commitment-details { margin: 0 24px 24px; }
+.company-access-panel .breakable-code { overflow-wrap: anywhere; }
+.company-access-panel .invoice-form { min-width: 0; }
+.company-access-panel .erp-field-help { overflow-wrap: anywhere; }
+
+.scope-banner p, .company-access-panel > .erp-field-help { font-size: 12px; line-height: 1.7; }
