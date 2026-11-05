@@ -1,6 +1,6 @@
 # Testnet dağıtımı ve kaynak doğrulama
 
-5 Kasım 2026 kontrolü: [v2 kontratının](https://stellar.expert/explorer/testnet/contract/CDJKNS4FOHGESEKME27CQ4E4Z3CQ2JOF5W6ZEML63E47WFVNTZCANABZ) Stellar Expert API kaydı `validation.status = unverified` döndürüyor. Doğrulanmış olarak sunulmaz. [Dağıtım kaydı](../artifacts/deployment.json) WASM ve kaynak dosyaları özetini içerir; yerel kaynak henüz yayınlanmadığı için `sourceDirty: true` işaretlidir.
+5 Kasım 2026 kontrolü: [v2 kontratının](https://stellar.expert/explorer/testnet/contract/CDJKNS4FOHGESEKME27CQ4E4Z3CQ2JOF5W6ZEML63E47WFVNTZCANABZ) İlk kontrolde Stellar Expert API kaydı `unverified` idi; resmi release sonrasındaki son kontrolde `validation.status = verified` oldu. [Dağıtım kaydı](../artifacts/deployment.json) WASM ve kaynak dosyaları özetini içerir; yerel kaynak henüz yayınlanmadığı için `sourceDirty: true` işaretlidir.
 
 ## Hazırlanan akış
 
@@ -8,15 +8,14 @@
 
 Kaynaklar: [SEP-55 taslağı](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0055.md), [Stellar Expert'in build workflow'u](https://github.com/stellar-expert/soroban-build-workflow/blob/main/.github/workflows/release.yml). Attestation kaynak/derleme izlenebilirliği sağlar; bağımsız güvenlik denetimi yerine geçmez.
 
-## Tamamlanması gereken dış adım
+## GitHub doğrulama ilerlemesi
 
-Otomatik onay denetimi GitHub'a commit/push işlemini durdurdu: dış depoya kaynak ve artifact gönderiminin tam kapsamı için açık kullanıcı onayı gerekiyor. Salt okunur dry-run erişimi başarılıydı; gerçek gönderim yapılmadı. Kullanıcı onayından sonra yalnızca incelenen değişiklikler `ugurrcoskun/Centerp` deposunun `codex/feedback-hardening` dalına gönderilecek. `.env.local`, secret değerleri, özel `output/` dosyaları ve kullanıcının önceden değiştirdiği `.gitignore` gönderilmeyecek. `main` birleştirmesi ve üretim yayını bu adıma dahil değildir.
+Kullanıcı 5 Kasım'daki devam talimatıyla gönderimi onayladı. `codex/feedback-hardening` dalı yayınlandı. [İlk attestation](https://github.com/ugurrcoskun/Centerp/actions/runs/42034448720) başarılı; indirilen WASM SHA-256 değeri `83ef135ba7680cec7677fa742dfbb7f81d8aff8de5fe3fdf4460fa5d297cad58` ve dağıtımla birebir aynı. [Uygulama/kontrat CI](https://github.com/ugurrcoskun/Centerp/actions/runs/42036328717) `465c0a4` için başarılı.
 
-Onaydan sonra:
+Explorer'ın yayın biçimini de üretmek için workflow, Stellar Expert'in resmi reusable workflow'unun `6b16426dd3a61715ddddf83a2df322a6371fe071` sürümüne bağlandı. Release etiketi test edilen branch commit'ine önceden sabitleniyor; default main commit'ine yanlışlıkla bağlanmıyor. [Release/verification çalışması](https://github.com/ugurrcoskun/Centerp/actions/runs/42036329788) başarıyla tamamlandı. Explorer API son kontrolde **verified**, repo `ugurrcoskun/Centerp`, commit `465c0a49c185707e49c3ab5c8dfda7f61e24b0a3`, path `contracts/invoice-escrow`, package `invoice-escrow` döndürdü. Resmi release binary'si indirildi ve dağıtılmış WASM ile birebir eşleşti.
 
-1. CI testlerini ve attestation işini tamamla; run/commit bağlantılarını kaydet.
-2. CI WASM artifact'ını indir ve SHA-256 özetini dağıtım kaydıyla karşılaştır. Eşleşmiyorsa yerel binary doğrulanmış sayılmaz; attested artifact ile yeni Testnet dağıtımı ve tekrar test gerekir.
-3. Stellar Expert kaynak eşleştirme sonucunu tekrar oku; `verified` sonucu ve doğru WASM/kontrat adresi eşleşmeden takip kutusunu kapatma.
-4. Son adres değişirse yeni faturalarda kullan; eski v1/v2 faturaların kendi adreslerini koru ve önceki test kanıtlarını yeniden etiketleme.
+## Sonuç
 
-Üretim ortamındaki auth/keeper secret kurulumu ve cron izlemesi ayrı dağıtım işleridir. Bu doküman yerel hazırlığı production kurulumu gibi göstermemelidir.
+Kaynak doğrulama tamamlandı. Kontrat adresi değişmedi; yeniden deployment gerekmedi. [Stellar Expert](https://stellar.expert/explorer/testnet/contract/CDJKNS4FOHGESEKME27CQ4E4Z3CQ2JOF5W6ZEML63E47WFVNTZCANABZ) doğrulanan kaynak bağlantısını gösteriyor. Bu kaynak/derleme doğrulamasıdır; bağımsız güvenlik denetimi değildir.
+
+Gerçek Vercel ortamındaki secret/cron kurulumu ayrı adım olarak [dağıtım listesinde](DEPLOYMENT_CHECKLIST.md) izlenir.

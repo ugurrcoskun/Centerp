@@ -34,12 +34,12 @@ Bu dosya sekiz geri bildirimin ortak takip kaydıdır. Her aşamada önce uygula
 | Sıra | İş | Öncelik | Bağımlılık | Uygulandı | Teknik kontrol | Kullanıcı kontrolü |
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 | Hukuki kapsam ve Türkiye ürün konumlandırması | P0 | Yok; dış hukuki değerlendirme üretim öncesi gerekir | [x] | [x] | [ ] |
-| 2 | Rust kontrat testlerini CI'a ekleme | P1 | Yok | [x] | [ ] | [ ] |
+| 2 | Rust kontrat testlerini CI'a ekleme | P1 | Yok | [x] | [x] | [ ] |
 | 3 | Escrow zaman aşımı, itiraz ve kesin sonuçlandırma | P0 | 1'in ürün sınırı, 2; itiraz politikası kararı | [x] | [ ] | [ ] |
 | 4 | Sabit SEP-10 sunucu anahtarı ve stellar.toml | P1 | Yok; dağıtımda kalıcı secret gerekir | [x] | [ ] | [ ] |
 | 5 | Şirket üyeliği, roller ve işlem yetkileri | P1 | 4; şirket cüzdanı/imzacı modeli kararı | [x] | [x] | [ ] |
 | 6 | Açık kaynak lisansı | P2 | Hak sahipliği ve lisans seçiminin netleştirilmesi | [x] | [x] | [ ] |
-| 7 | Son kontratı Testnet'e dağıtma ve kaynak doğrulama | P1 | 3, 6; son kaynak sürümü ve toolchain | [ ] | [ ] | [ ] |
+| 7 | Son kontratı Testnet'e dağıtma ve kaynak doğrulama | P1 | 3, 6; son kaynak sürümü ve toolchain | [x] | [x] | [ ] |
 | 8 | Mainnet / SCF / Instaward yol haritası | P2 | Önceki aşamaların sonuçları ve açık dış bağımlılıklar | [x] | [x] | [ ] |
 
 ## 0. Hazırlık ve mevcut durum kaydı
@@ -72,9 +72,9 @@ Hukuki dayanak: TCMB düzenlemesi kripto varlıkların ödemelerde doğrudan vey
 - [x] Başlangıç uygulama testlerini ve `npm run contract:test` sonucunu kaydet.
 - [x] CI'a ayrı Rust doğrulama işi ekle; SDK ile uyumlu Rust sürümünü sabitle ve `Cargo.lock` kullan.
 - [x] CI işinde Rust test hatasının sonraki adımları durdurduğunu ve testin isteğe bağlı olmadığını workflow incelemesiyle doğrula.
-- [ ] Gerçek GitHub Actions çalışmasını doğrula; dış gönderim için kullanıcı onayı gerekiyor.
+- [x] Gerçek GitHub Actions çalışması geçti: [CI 42036328717](https://github.com/ugurrcoskun/Centerp/actions/runs/42036328717), commit `465c0a4`. Uygulama ve Rust işleri başarılı.
 - [x] Kontrat WASM build kontrolünü ekle; gerekli hedef ve toolchain kurulumunu belgeleyip doğrula.
-- [ ] Yerel sonuç ile GitHub Actions sonucunu ayrı kaydet. Actions çalışmadıysa uzaktaki kontrolü açık bırak.
+- [x] Yerel sonuçlar ve GitHub sonucu ayrı kaydedildi. İlk CI eksik lock kayıtlarında durdu; 7 eksik kayıt tamamlandı, mevcut kilitli sürümler değişmedi ve temiz npm ci + yeni CI geçti.
 
 **Kabul:** Yeni bir PR/push uygulama kontrolleri yanında Rust testlerini de zorunlu çalıştırıyor; başarısız kontrat testi yeşil CI üretmiyor.
 
@@ -147,7 +147,7 @@ Bu aşama önce davranış tasarımı, ardından kodlama olarak ilerler. Yalnız
 - [x] Stellar Expert API üzerinde 5 Kasım 2026 v2 kontrat kontrolü: `validation.status = unverified`. Sonuç doğrulanmış gibi sunulmuyor.
 - [x] Son kontrat kaynağını, `Cargo.lock`, toolchain ve derleme seçeneklerini tekrarlanabilir derleme için sabitle.
 - [x] Eski kontrat geçiş planını uygulayarak yeni Testnet dağıtımını hazırla; kontrat adresi ve WASM özetini kaydet.
-- [ ] Güncel resmi doğrulama akışıyla kaynak kodu doğrulat; explorer'daki sonucu bağımsız kontrol et.
+- [x] Resmi Stellar Expert workflow yayını başarılı. Explorer API `verified` döndürüyor; commit `465c0a4`, doğru repo/path/package ve dağıtılmış WASM eşleşmesi doğrulandı.
 - [x] Uygulama kontrat ayarlarını ve dağıtım kanıtlarını güncelle; eski kanıtları yeni sürümün testi gibi sunma.
 - [x] Yeni sürümün ERP, tam anchor ve escrow Testnet senaryolarını adres ve işlem hash'leriyle kaydet. Kaynak henüz yayınlanmadığından dağıtım `sourceDirty: true`; yayın/attestation eşleştirmesi açık.
 
@@ -171,7 +171,7 @@ Bu aşama önce davranış tasarımı, ardından kodlama olarak ilerler. Yalnız
 
 - [x] `npm run typecheck`, `npm test`, `npm run build` sonuçlarını son sürüm için kaydet.
 - [x] Yerel `npm run contract:test` ve `npm run contract:build` sonuçlarını kaydet.
-- [ ] Uzaktaki CI sonucunu kaydet; GitHub gönderim onayı bekliyor.
+- [x] Uzaktaki CI sonucu kaydedildi: `465c0a4` için uygulama ve kontrat kontrolleri başarılı.
 - [x] `npm run test:integration` ve `npm run test:erp` geçti. Ayrıca `npm run test:escrow:v2`, auth ve gerçek HTTP yetki testleri geçti.
 - [ ] Yeniden başlatma, yetkisiz erişim, teslim zamanı/itiraz ve mutabakat senaryolarını kullanıcıyla kontrol et.
 - [x] README, ürün kapsamı, hukuki kapsam, yol haritası, deploy bilgisi ve test kanıtlarını çapraz kontrol et. Eski v1 kanıtları ayrı tutuldu.
@@ -189,7 +189,7 @@ Yeni satır biçimi: tarih, aşama, değişen dosya/commit, çalıştırılan ko
 
 - 5 Kasım: `npm test` 29 test; `npm run contract:test` 12 test; `npm run typecheck` geçti. İnceleme düzeltmelerinden sonraki son üretim build'i de geçti.
 - Yerel public key ve `stellar.toml` HTTP 200 doğrulandı; gerçek yerel production restart sonrasında key değişmedi. `npm run test:auth`: CORS, imzalı challenge, JWT, replay ve domain reddi geçti. Gerçek çok sunuculu ortam ve production secret kurulumu açık.
-- Yeni Testnet kontratı: `CDJKNS4FOHGESEKME27CQ4E4Z3CQ2JOF5W6ZEML63E47WFVNTZCANABZ`. Yerel WASM SHA-256, dağıtım kaydıyla aynı. Explorer halen unverified; GitHub attestation için dış gönderim onayı gerekiyor.
+- Yeni Testnet kontratı: `CDJKNS4FOHGESEKME27CQ4E4Z3CQ2JOF5W6ZEML63E47WFVNTZCANABZ`. Yerel WASM SHA-256, dağıtım kaydıyla aynı. Explorer artık verified; resmi release, attestation ve dağıtım WASM özetleri aynı.
 - ERP ve tam anchor yatırma/çekme testleri geçti: [ERP kanıtı](../artifacts/erp-testnet-v2-proof.json), [tam akış kanıtı](../artifacts/testnet-v2-proof.json).
 - Gerçek Testnet keeper süre sonu iadesi, bağımsız hakem iadesi ve tekrar kararın reddi geçti; alıcı bakiyesi tam geri döndü: [escrow v2 kanıtı](../artifacts/escrow-v2-proof.json).
 - Gerçek HTTP rol/üyelik testleri geçti: [yetki kanıtı](../artifacts/access-proof.json). Kodda roller arayüzden bağımsız denetleniyor.
@@ -198,12 +198,16 @@ Yeni satır biçimi: tarih, aşama, değişen dosya/commit, çalıştırılan ko
 - Masaüstü ve 390 px mobil üyelik/finans ekranları kontrol edildi; mobil yatay taşma yok. Ekran kanıtları `output/feedback-ui/` altında.
 - Hukuki değerlendirme, gerçek anchor sözleşmesi, bağımsız güvenlik incelemesi ve Mainnet kapıları açık. Kullanıcı kontrol kutuları kullanıcı incelemesine bırakıldı.
 
-## Dış gönderim için bekleyen tek yayın onayı
+## GitHub yayını ve canlı ortam onayı
 
-Otomatik onay denetimi GitHub commit/push girişimini, kaynak ve artifact kapsamının dış depoya gönderilmesi için açık kullanıcı onayı gerektirdiğinden işlem başlamadan reddetti. GitHub'a gönderim/commit yapılmadı. Hazır dosyalar incelendikten sonra `ugurrcoskun/Centerp` deposunun `codex/feedback-hardening` dalına yalnızca kod, belge, proje agent yapılandırması ve üretilmiş test kanıtları gönderilebilir. Secret'lar, `.env.local`, `output/` ve kullanıcının mevcut `.gitignore` değişikliği hariç tutulacak. `main` birleştirmesi ve üretim yayını bu onaya dahil değildir. Ayrıntılar: [kaynak doğrulama](CONTRACT_VERIFICATION.md).
+Kullanıcının sonraki talimatıyla GitHub gönderimi onaylandı ve `codex/feedback-hardening` dalı yayınlandı. İlk kaynak attestation başarılı; indirilen WASM dağıtılmış kontratla birebir eşleşiyor. Güncel CI `465c0a4` için yeşil. Stellar Expert'in sabitlenmiş resmi release workflow'u ve explorer doğrulaması tamamlandı. Kullanıcının açık Production yayın onayıyla mevcut GitHub main → Vercel akışı kullanılacak; `.gitignore` değişikliği korunuyor.
+
+Vercel oturumu ve bağlı `centerp` projesi doğrulandı; mevcut canlı cron tanımları boş. Otomatik onay denetimi Production secret aktarımını ayrıca reddetti. Üç secret ve dört public ayar, kaynak/hedef ve sonraki kontroller [dağıtım listesinde](DEPLOYMENT_CHECKLIST.md) somut olarak yazıldı; tam kapsam için kullanıcıya tek onay sorusu iletildi. Kullanıcı açıkça onayladı; yedi ayar başarıyla aktarıldı ve Production/sensitive metadatası doğrulandı. Web yayını ve canlı smoke testleri sırada.
 
 ## Agent mimarisi ek işi
 
 Kullanıcının köke eklediği mimari belgesi [docs/development/AGENT_ARCHITECTURE.md](development/AGENT_ARCHITECTURE.md) konumuna taşındı. Kökte 1.421 byte kısa `AGENTS.md`, proje içinde dört rol TOML dosyası ve `.codex/config.toml` var. Varsayılan tek agent; yararlı ise dar görev devri, ana agent dahil en fazla üç eşzamanlı agent. Luna / low canlı yapılandırma kontrolü ve Sol / medium finansal Reviewer çalıştı. Mevcut sohbetin modeli kendiliğinden değiştirilmedi; gelecekteki proje varsayılanları ayrı.
 
 Son kontrol günlüğü: 5 Kasım 2026 — 29 uygulama testi, 12 Rust testi, typecheck, WASM ve son production build başarılı. Yeni auth smoke restart sonrasında tekrar geçti. Hazır diff inceleme paketi `output/feedback-review.patch` altında; dış gönderim yapılmadı.
+
+5 Kasım devam kaydı: GitHub CI yeşil; ilk attested WASM özeti dağıtımla aynı. Eski şirket sahipleri için üyelik etkinleştirme arayüzü eklendi. Bu değişiklik sonrası 29 test, typecheck ve build geçti.

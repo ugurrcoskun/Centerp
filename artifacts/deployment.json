@@ -12,5 +12,16 @@
   "uploadHash": "d8f21ac3188569ed13dfcce4e0c757bd18e255fd91b8914d08fe8cc19b972fad",
   "deploymentHash": "aa22b551d927de6fa66aca1d99aa126d172a8cd1943be58958f83d845ce7a5e7",
   "deployedAt": "2026-11-05T12:38:38.587Z",
-  "sourceVerification": "pending-github-attestation"
+  "sourceVerification": "verified",
+  "sourceAttestation": {
+    "commit": "37a3ddcfa0ff042786d3e129587068ae364a2bb7",
+    "runUrl": "https://github.com/ugurrcoskun/Centerp/actions/runs/42034448720",
+    "wasmSha256": "83ef135ba7680cec7677fa742dfbb7f81d8aff8de5fe3fdf4460fa5d297cad58",
+    "matchesDeployedWasm": true
+  },
+  "verifiedSourceCommit": "465c0a49c185707e49c3ab5c8dfda7f61e24b0a3",
+  "verifiedSourceRun": "https://github.com/ugurrcoskun/Centerp/actions/runs/42036329788",
+  "verifiedSourceRelease": "https://github.com/ugurrcoskun/Centerp/releases/tag/escrow-v2-testnet-42036329788_contracts_invoice_escrow_invoice-escrow_pkg0.2.0_cli28.1.0",
+  "explorerValidationCheckedAt": "2026-11-05",
+  "releaseWasmMatchesDeployment": true
 }

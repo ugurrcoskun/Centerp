@@ -1,6 +1,7 @@
 # Centerp
 
 Reply concisely in Turkish. Finish authorized work; preserve user changes.
+Use the repository owner’s configured Git identity for author/committer; do not add Codex attribution unless requested.
 
 ## Efficient workflow
 
