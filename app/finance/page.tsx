@@ -138,7 +138,7 @@ export default function App() {
   async function connect() {
     if (busy) return;
     setBusy('Cüzdan bağlantısı');
-    setWalletFeedback({status: 'working', text: 'Cüzdan seçim penceresi açılıyor. Freighter kurulu değilse “Install” seçeneğini kullanabilirsiniz.'});
+    setWalletFeedback({status: 'working', text: 'Freighter kontrol ediliyor. Eklentide bağlantı isteği görünürse onaylayın.'});
     try {
       const address = await connectFreighter();
       setWalletFeedback({status: 'working', text: 'Güvenli oturum isteği hazırlanıyor. Freighter’daki imza talebini onaylayın.'});

@@ -18,9 +18,17 @@ export async function walletKit() {
   return StellarWalletsKit;
 }
 export async function connectFreighter() {
+  const {FreighterModule} = await import('@creit.tech/stellar-wallets-kit/modules/freighter');
+  // Embedded browsers may never answer the extension's discovery message.
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const available = await Promise.race([
+    new FreighterModule().isAvailable(),
+    new Promise<false>(resolve => { timeout = setTimeout(() => resolve(false), 3000); }),
+  ]).finally(() => clearTimeout(timeout));
+  if (!available) throw new Error('Freighter bu tarayıcıda algılanmadı. Centerp’in Finans sayfasını Freighter eklentisinin kurulu olduğu masaüstü tarayıcıda açıp yeniden deneyin.');
   const kit = await walletKit();
   try {
-    const result = await kit.authModal();
+    const result = await kit.fetchAddress();
     if (!result.address) throw new Error('Seçilen cüzdan hesap adresi paylaşmadı.');
     const network = await kit.getNetwork();
     if (network.networkPassphrase !== STELLAR.passphrase) {
@@ -29,7 +37,6 @@ export async function connectFreighter() {
     return result.address;
   } catch (error) {
     const message = typeof error === 'object' && error && 'message' in error ? String(error.message) : '';
-    if (message === 'The user closed the modal.') throw new Error('Cüzdan seçim penceresi kapatıldı. Bağlanmak için yeniden deneyin.');
     throw error instanceof Error ? error : new Error(message || 'Cüzdan bağlantısı tamamlanamadı.');
   }
 }
