@@ -1,6 +1,5 @@
 node_modules/
 .next/
-.agents/
 .env*
 !.env.example
 data/
@@ -14,6 +13,16 @@ yarn-debug.log*
 yarn-error.log*
 .vercel/
 .DS_Store
-positivus_landing_page.svg
-.vercel
-.env*.local
+output/
+
+# Local agent configuration and private project notes
+.agents/
+.codex/
+AGENTS.md
+/local-notes/
+/agent-mimarisi.md
+/docs/development/AGENT_ARCHITECTURE.md
+/docs/FEEDBACK_ACTION_PLAN.md
+/docs/project/feedback-action-plan.md
+/docs/DEPLOYMENT_CHECKLIST.md
+/docs/operations/deployment-checklist.md

@@ -64,8 +64,9 @@ Tables keep their semantic structure and may scroll horizontally inside their ow
 - Menus and dialogs support keyboard navigation and Escape dismissal.
 - Text wraps instead of clipping; long IDs use `overflow-wrap: anywhere`.
 - Primary actions work with click, tap, and keyboard. Hover is an enhancement only.
+- Button labels describe the action or outcome. Loading, error and empty states help the user decide what to do next.
 
 ## Page overrides
 
-- `pages/overview.md`: operational queue first; compact, separated summary cards are allowed but do not add a hero or a metric-card mosaic.
-- `pages/finance.md`: ERP liabilities precede the ledger; Anchor and escrow are operational states, not decorative illustrations.
+- [Workspace](../../app/workspace/page.tsx): show the operational queue first and use compact summaries.
+- [Finance](../../app/finance/page.tsx): show ERP liabilities before the ledger and present Anchor and escrow as operational states.

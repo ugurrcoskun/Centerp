@@ -16,7 +16,7 @@
 
   [![Soroban Escrow](https://img.shields.io/badge/Soroban-Escrow-20352D?style=flat-square)](artifacts/deployment.json)
   [![Anchor Standards](https://img.shields.io/badge/Anchor-SEP--1_%7C_SEP--6_%7C_SEP--10_%7C_SEP--38-C53D55?style=flat-square)](lib/anchor.ts)
-  [![Tests](https://img.shields.io/badge/tests-29_passing-20352D?style=flat-square)](tests)
+  [![CI](https://github.com/ugurrcoskun/Centerp/actions/workflows/ci.yml/badge.svg)](https://github.com/ugurrcoskun/Centerp/actions/workflows/ci.yml)
   [![Stack](https://img.shields.io/badge/Next.js_15-TypeScript_%7C_Rust-111318?style=flat-square)](package.json)
 </div>
 
@@ -40,7 +40,7 @@ This creates three recurring problems:
 
 ## Product scope in Türkiye
 
-Centerp currently runs exclusively on Testnet. TRY bank movements are simulated; direct USDC invoice, supplier and employee flows demonstrate the technology with test assets. The proposed Türkiye production scope is **TL anchor off-ramp and ERP reconciliation**, subject to review of the actual fund flow and provider permissions. Conversion to TL alone does not establish legal compliance. See [legal scope and production dependencies](docs/LEGAL_SCOPE.md).
+Centerp currently runs exclusively on Testnet. TRY bank movements are simulated; direct USDC invoice, supplier and employee flows demonstrate the technology with test assets. The proposed Türkiye production scope is **TL anchor off-ramp and ERP reconciliation**, subject to review of the actual fund flow and provider permissions. Conversion to TL alone does not establish legal compliance. See [legal scope and production dependencies](docs/project/legal-scope.md).
 
 ## The Centerp solution
 
@@ -86,14 +86,14 @@ flowchart LR
 | **108-second product walkthrough** | [Watch the full product demo](https://centerp.vercel.app/demo) |
 | **Project presentation** | [Open the Centerp presentation on Google Docs](https://docs.google.com/document/d/181gDA3zyJkbDmM3zG8s0Eg8ZCkskBm8swwbMOdkRyYc/edit?usp=sharing) |
 | **Current v2 escrow contract** | [Open on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CDJKNS4FOHGESEKME27CQ4E4Z3CQ2JOF5W6ZEML63E47WFVNTZCANABZ) |
-| **Testnet execution evidence** | [`artifacts/testnet-proof.json`](artifacts/testnet-proof.json) |
-| **ERP-to-Stellar evidence** | [`artifacts/erp-testnet-proof.json`](artifacts/erp-testnet-proof.json) |
+| **Testnet execution evidence** | [v2 Testnet proof](artifacts/testnet-v2-proof.json) |
+| **ERP-to-Stellar evidence** | [v2 ERP workflow proof](artifacts/erp-testnet-v2-proof.json) |
 
 <br/>
 
 <p align="center">
   <a href="https://centerp.vercel.app/demo">
-    <img src="docs/demo-preview.gif" alt="Centerp product walkthrough showing the ERP and Stellar finance workflow" width="100%" />
+    <img src="docs/demo/demo-preview.gif" alt="Centerp product walkthrough showing the ERP and Stellar finance workflow" width="100%" />
   </a>
   <br/>
   <em>Click the preview to watch the full walkthrough in fullscreen with narration.</em>
@@ -116,7 +116,7 @@ flowchart LR
 
 ## Current v2 Testnet evidence
 
-The v2 contract is [CDJK…NABZ](https://stellar.expert/explorer/testnet/contract/CDJKNS4FOHGESEKME27CQ4E4Z3CQ2JOF5W6ZEML63E47WFVNTZCANABZ). [Deployment](artifacts/deployment.json) and [ERP workflow proof](artifacts/erp-testnet-v2-proof.json) identify the new network runs. Explorer source validation is tracked separately in the feedback checklist.
+The v2 contract is [CDJK…NABZ](https://stellar.expert/explorer/testnet/contract/CDJKNS4FOHGESEKME27CQ4E4Z3CQ2JOF5W6ZEML63E47WFVNTZCANABZ). See the [deployment record](artifacts/deployment.json), [ERP workflow proof](artifacts/erp-testnet-v2-proof.json) and [source verification](docs/operations/contract-verification.md).
 
 ## From order to verifiable settlement
 
@@ -134,7 +134,7 @@ The buyer can pay from an existing USDC balance or acquire Testnet USDC through 
 
 ### 04 — Deliver and release
 
-Shipping changes ERP stock separately. The merchant reports delivery on-chain before the delivery deadline. Buyer approval releases USDC immediately. Otherwise, reported delivery has a three-day dispute window after the delivery deadline. No delivery report enables a buyer refund; no dispute enables merchant release. Disputes have an independent resolver and a seven-day buyer-refund fallback. A fee-paying keeper or a manual transaction triggers deadline outcomes. See [escrow v2 rules and tradeoffs](docs/ESCROW_V2.md).
+Shipping changes ERP stock separately. The merchant reports delivery on-chain before the delivery deadline. Buyer approval releases USDC immediately. Otherwise, reported delivery has a three-day dispute window after the delivery deadline. No delivery report enables a buyer refund; no dispute enables merchant release. Disputes have an independent resolver and a seven-day buyer-refund fallback. A fee-paying keeper or a manual transaction triggers deadline outcomes. See [escrow v2 rules and tradeoffs](docs/architecture/escrow-v2.md).
 
 ### 05 — Reconcile with proof
 
@@ -272,7 +272,7 @@ The verified workflow covers signed sessions, trustlines, Anchor authentication 
 
 ## Roadmap and release checks
 
-See the [roadmap](docs/ROADMAP.md), [feedback checklist](docs/FEEDBACK_ACTION_PLAN.md), [escrow v2 rules](docs/ESCROW_V2.md) and [legal scope](docs/LEGAL_SCOPE.md).
+See the [roadmap](docs/project/roadmap.md) and [documentation index](docs/README.md).
 
 ## Run locally
 
@@ -317,17 +317,17 @@ app/
 ├── page.tsx                 Landing page
 ├── workspace/               Connected ERP workspace
 ├── finance/                 Payments, Anchor, escrow and reconciliation
+├── demo/                    Product walkthrough
 └── api/                     Server-side ERP and bridge endpoints
 
+components/                  Shared application UI
+lib/                         ERP rules, persistence and Stellar integration
 contracts/invoice-escrow/    Soroban escrow contract in Rust
-lib/anchor.ts                SEP-1, SEP-6, SEP-10 and SEP-38 integration
-lib/stellar.ts               Horizon, Soroban and payment orchestration
-lib/erp.ts                   ERP rules, atomic workflows and ledger updates
-lib/wallet.ts                Freighter and Wallets Kit integration
-lib/db.ts                    Local and deployed persistence
-artifacts/                   Deployment and end-to-end proof records
-docs/                        Product, architecture and research documentation
-public/presentation.mp4      108-second narrated walkthrough
+scripts/                     Setup, deployment and Testnet verification
+tests/                       Application tests
+artifacts/                   Deployment metadata and verification evidence
+docs/                        Project, architecture and operations guides
+public/                      Assets served by the application
 ```
 
 ---

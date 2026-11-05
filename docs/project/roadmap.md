@@ -1,6 +1,6 @@
 # Centerp yol haritası
 
-Güncelleme: 5 Kasım 2026. Takip: [geri bildirim planı](FEEDBACK_ACTION_PLAN.md). Aşağıdaki süreler geliştirme tahminidir; dış onay ve Mainnet tarihi taahhüdü değildir.
+Güncelleme: 5 Kasım 2026. Aşağıdaki süreler geliştirme tahminidir; dış onay ve Mainnet tarihi taahhüdü değildir.
 
 | Aşama | Hedef aralık | Sorumlu | Teslim / geçiş kriteri |
 | --- | --- | --- | --- |
@@ -13,7 +13,7 @@ Güncelleme: 5 Kasım 2026. Takip: [geri bildirim planı](FEEDBACK_ACTION_PLAN.m
 
 ## Bir sonraki somut hedef
 
-Kaynak doğrulanmış Testnet sürümünü, test sonuçlarını ve kullanıcı pilotu senaryolarını tek sürüm paketi olarak hazırlamak. Kodun yerelde geçmesi, GitHub CI veya explorer doğrulaması tamamlandı demek değildir. Canlı durum [takip dosyasında](FEEDBACK_ACTION_PLAN.md) tutulur.
+Kaynak doğrulanmış Testnet sürümünü, test sonuçlarını ve kullanıcı pilotu senaryolarını tek sürüm paketi olarak hazırlamak. Sürüm için GitHub CI sonuçları ve [explorer kaynak doğrulaması](../operations/contract-verification.md) kontrol edilir.
 
 ## Instaward / SCF adımı
 
@@ -30,7 +30,7 @@ Pilot doğrulaması ve güvenlik/operasyon kapsamı netleştiğinde SCF Build i�
 - Worker anahtarı/fon bakiyesi, zamanlayıcı, TTL bakımı, gecikme ve başarısızlık uyarıları operasyon ortamında doğrulandı.
 - Auth anahtarı ve şirket cüzdanı için ayrı saklama, kurtarma ve rotasyon süreçleri var; rol sistemi bir cüzdan imzasının yerini tutmuyor.
 - Eski kontrat fonları ve yeni kontrat adresine geçiş kayıtlı; eski kanıtlar yeni sürüme aitmiş gibi sunulmuyor.
-- [Hukuki kapsam](LEGAL_SCOPE.md) belgesindeki dış değerlendirmeler ve gerçek anchor/banka ilişkisi tamamlandı.
+- [Hukuki kapsam](legal-scope.md) belgesindeki dış değerlendirmeler ve gerçek anchor/banka ilişkisi tamamlandı.
 - Gerçek TL çıkışının kanıtları, muhasebe kapsamı, destek, izleme ve veri koruma sorumlulukları doğrulandı.
 
 Mainnet fonları bu geliştirme çalışmasının kapsamında kullanılmaz.
