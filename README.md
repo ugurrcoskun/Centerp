@@ -347,6 +347,11 @@ These boundaries are intentional: the prototype focuses on proving that real ERP
   <p>Operations recorded. Payments protected. Settlement verified.</p>
 </div>
 
+## Contributors
+
+- [Uğur Coşkun](https://github.com/ugurrcoskun)
+- [Zeynep Gül Özataş](https://github.com/zeynepozatass)
+  
 ## License
 
 Project source is available under the [MIT License](LICENSE), copyright Centerp contributors. Third-party dependencies and assets retain their own licenses.
