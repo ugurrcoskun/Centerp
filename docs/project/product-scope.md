@@ -1,162 +1,163 @@
-# Centerp — güncel ürün kapsamı
+# Centerp — current product scope
 
-Centerp şirketin ERP çalışma alanıdır. Finans modülü ödeme, escrow ve mutabakat için Stellar kullanır.
+Centerp is the company's ERP workspace. The finance module uses Stellar for payments, escrow and reconciliation.
 
-## Türkiye üretim kapsamı
+## Production scope in Türkiye
 
-Mevcut para hareketleri yalnızca Testnet gösterimidir; TRY banka hareketleri simüledir. Türkiye için değerlendirilecek model TL anchor çıkışı ve ERP mutabakatıdır. Gerçek sağlayıcı entegrasyonu ve somut fon akışının hukuki değerlendirmesi henüz tamamlanmadı. Doğrudan USDC fatura, tedarikçi ve çalışan akışları Türkiye'de gerçek kripto ödeme hizmeti teklifi değildir. Ayrıntılar: [hukuki kapsam](legal-scope.md).
+Current fund movements are Testnet demonstrations only; TRY bank movements are simulated. The model to be evaluated for Türkiye is a TL Anchor off-ramp and ERP reconciliation. Real provider integration and legal assessment of the specific fund flow are not yet complete. Direct USDC invoice, supplier and employee flows are not an offer of a real crypto payment service in Türkiye. Details: [legal scope](legal-scope.md).
 
-## 1. Ürün neyi çözüyor?
+## 1. What does the product solve?
 
-İşletmede müşteri siparişi, üretim, stok, tedarikçi borcu, çalışan ödeme planı ve tahsilat farklı kayıtlarda kopuk durmasın. Ortak şirket ve iş kaydı üzerinden bütün temel modüller birbirini beslesin. Para hareketi gerektiğinde şirketin cüzdanı Stellar Testnet ile işlemi imzalasın; doğrulanmış sonuç ERP'ye geri dönsün.
+Customer orders, production, inventory, supplier liabilities, employee payment plans and collections should not remain disconnected across separate records. All core modules should feed one another through shared company and business records. When funds need to move, the company wallet signs the transaction on Stellar Testnet; the verified result returns to the ERP.
 
-Hackathon prototipi bu modeli küçük ve çalışan bir ERP olarak gösterir. SAP/Logo düzeyinde bütün kurumsal fonksiyonları kapsama iddiası yoktur. Modüller sadece görsel menü değildir: satış siparişi gerçek fatura bağlantısı, satın alma gerçek stok girişi, üretim gerçek stok tüketimi, personel gerçek dönem borcu ve ödeme bağlantısı oluşturur.
+The hackathon prototype demonstrates this model as a small, working ERP. It does not claim to cover all enterprise functions at the level of SAP/Logo. The modules are more than visual menus: sales orders create actual invoice links, purchasing creates stock receipts, production consumes inventory, and employee records create period-based liabilities and payment links.
 
-## 2. Modüller ve bağlantıları
+## 2. Modules and connections
 
-| Modül | Mevcut çalışan davranış | Stellar bağlantısı |
+| Module | Current working behavior | Stellar connection |
 |---|---|---|
-| Şirket profili | Şirket adı, ortak çalışma alanı, tarayıcı oturumu | İmzalı cüzdan oturumu ile şirket cüzdanı eşleştirme |
-| Müşteri/tedarikçi | Tür, ad, iletişim, public key ekleme ve düzenleme | Fatura müşterisi veya USDC ödeme alıcısı |
-| Satış | Çok kalemli sipariş, sunucuda hassas toplam, ayrı sevkiyat ve finans durumu | Sipariş toplamı ve müşteri key'i sabitlenerek Soroban faturası |
-| Satın alma | Tedarikçi siparişi, mal kabulü, stoğa giriş, ödeme yükümlülüğü | Kaynak satın alma kaydına bağlı exact-amount USDC ödeme |
-| Stok/depo | SKU, hammadde/mamul, miktar, sipariş seviyesi, stok hareket defteri | Para hareketi stok işlemini otomatik yapmaz; ortak kaynak ID ile ilişki kurulur |
-| Üretim | Çıktı miktarı, çok girdili birim reçete, plan/tamamlama | Üretim sonucu satış ve teslim sürecini besler; üretim verisi on-chain'e taşınmaz |
-| İnsan kaynakları | Çalışan, departman, görev, USDC referans ödeme planı | Çalışan + dönem borcuna bağlı USDC transferi |
-| Muhasebe/finans | Borç/alacak eşit tutarlı yönetim kayıtları; işlem kaynağı ve varsa hash | Create/fund/release/refund ve USDC ödeme sonuçlarının yönetim defterine aktarımı |
-| Stellar finansı | Freighter, bakiye, trustline, invoice, escrow, Anchor, işlem defteri | Gerçek Stellar Testnet işlemleri; TRY/banka/KYC mock |
+| Company profile | Company name, shared workspace, browser session | Company wallet binding through a signed wallet session |
+| Customers/vendors | Add and edit type, name, contact details and public key | Invoice buyer or USDC payment recipient |
+| Sales | Multi-line orders, precise server-calculated totals, separate shipping and financial status | Soroban invoice with fixed order total and customer key |
+| Purchasing | Supplier orders, goods receipt, stock entry, payment obligation | Exact-amount USDC payment linked to the source purchase record |
+| Inventory/warehouse | SKU, raw materials/finished goods, quantities, reorder levels, stock movement ledger | Fund movements do not automatically perform stock operations; records are linked by a shared source ID |
+| Production | Output quantity, multi-input recipe per unit, planning/completion | Production output feeds sales and delivery; production data does not go on-chain |
+| Human resources | Employee, department, role, USDC reference payment plan | USDC transfer linked to an employee + period liability |
+| Accounting/finance | Balanced debit/credit management entries; transaction source and hash when available | Create/fund/release/refund and USDC payment results posted to the management ledger |
+| Stellar finance | Freighter, balances, trustlines, invoices, escrow, Anchor, transaction ledger | Real Stellar Testnet transactions; mocked TRY/banking/KYC |
 
-## 3. Ana iş akışları
+## 3. Core workflows
 
-### Satıştan tahsilata
+### From sales to collection
 
-1. Müşteri public key'i ve ürün kayıtları oluşturulur.
-2. Satış siparişinde ürün, adet ve USDC birim referans fiyatları belirlenir.
-3. Sipariş toplamı sunucuda decimal aritmetiğiyle hesaplanır.
-4. Şirketin doğrulanmış cüzdanıyla `Stellar ile faturala` seçilir.
-5. Backend şirket, sipariş sahipliği, toplam, müşteri key'i ve henüz başka faturaya bağlanmamış olma koşullarını kontrol eder.
-6. Fatura taahhüdüne ERP sipariş ID'si ve ürün kalemlerinin snapshot'ı da eklenir.
-7. On-chain create doğrulanınca sipariş faturalanır; müşteri alacağı/satış geliri kaydı oluşur.
-8. Müşteri Anchor üzerinden TRY simülasyonu ile USDC alabilir.
-9. Fund doğrulanınca müşteri alacağı escrow alacağına dönüşür. Şirket henüz tahsilat yapmamıştır.
-10. Sevkiyat ERP'de yapılınca stok düşer. **Bu adım escrow'u serbest bırakmaz.**
-11. Müşteri teslimatı onaylayınca on-chain release satıcıya USDC aktarır.
-12. Doğrulanmış release siparişi tahsil edildi yapar; USDC cüzdanı/escrow alacağı kaydı oluşur.
+1. Create the customer public key and product records.
+2. Specify products, quantities and USDC reference unit prices in the sales order.
+3. The server calculates the order total using decimal arithmetic.
+4. Select `Invoice with Stellar` using the company's verified wallet.
+5. The backend checks the company, order ownership, total, customer key and that the order is not already linked to another invoice.
+6. The invoice commitment also includes the ERP order ID and a snapshot of the line items.
+7. Once the on-chain create is verified, the order is invoiced and an accounts receivable/sales revenue entry is created.
+8. The customer can acquire USDC through the Anchor's TRY simulation.
+9. Once funding is verified, accounts receivable becomes an escrow receivable. The company has not yet collected the payment.
+10. Shipping in the ERP reduces stock. **This step does not release the escrow.**
+11. When the customer approves delivery, the on-chain release transfers USDC to the merchant.
+12. A verified release marks the order as collected and creates a USDC wallet/escrow receivable entry.
 
-### Satın almadan tedarikçi ödemesine
+### From purchasing to supplier payment
 
-1. Tedarikçi ve ürün seçilerek çok kalemli satın alma siparişi açılır.
-2. Mal kabulü stok miktarını artırır, tedarikçi borcu oluşturur ve stok/tedarikçi borçları yönetim kaydı atar.
-3. Aynı sipariş ikinci kez kabul edilemez.
-4. Finans modülü tutarı ve alıcı public key'ini ERP kaydından alır; frontend'den serbest destination/tutar kabul etmez.
-5. Şirket cüzdanı Memo.text(ERP ödeme kodu) ile USDC transferini imzalar.
-6. Horizon sonucu başarılıysa borç `paid` olur ve hash saklanır.
-7. Tekrar ödeme hazırlığı reddedilir. Belirsiz ağ sonucu borcu ödenmiş saymaz.
+1. Create a multi-line purchase order by selecting a supplier and products.
+2. Goods receipt increases stock, creates a supplier liability and posts an inventory/accounts payable management entry.
+3. The same order cannot be received twice.
+4. The finance module takes the amount and recipient public key from the ERP record; it does not accept an arbitrary destination/amount from the frontend.
+5. The company wallet signs the USDC transfer with Memo.text(ERP payment code).
+6. If the Horizon result is successful, the liability becomes `paid` and the hash is stored.
+7. Repeat payment preparation is rejected. An uncertain network result does not mark the liability as paid.
 
-### Üretimden stoğa
+### From production to inventory
 
-1. İş emrinde çıktı ürünü, adet ve bir çıktı için gereken girdiler kaydedilir.
-2. Planlama sırasında stok tüketilmez veya rezerve edilmez.
-3. Tamamlama bütün girdilerin mevcut stoklarını kontrol eder.
-4. Tüketim hareketleri, çıktı hareketi ve iş emri durumu tek SQLite transaction'ında yazılır.
-5. Sonraki bir girdide stok yetersizse önceki tüketimler de geri alınır.
-6. Tamamlanmış iş emri tekrar tamamlanamaz.
-7. Üretilen stok satış sevkiyatında kullanılabilir.
+1. Record the output product, quantity and inputs required per unit in the work order.
+2. Planning does not consume or reserve stock.
+3. Completion checks the available stock of all inputs.
+4. Consumption movements, the output movement and the work order status are written in a single SQLite transaction.
+5. If a later input has insufficient stock, earlier consumption is also rolled back.
+6. A completed work order cannot be completed again.
+7. Produced stock can be used in sales shipments.
 
-### Çalışandan dönemlik ödemeye
+### From employee records to period-based payments
 
-1. Çalışan adı, görev, departman, aylık USDC referans tutarı ve alıcı key'i kaydedilir.
-2. Dönem seçildiğinde her çalışan için bir ödeme yükümlülüğü oluşturulur.
-3. Aynı çalışan + ay yeniden borçlandırılmaz; daha sonra eklenen çalışan için o ayın eksik kaydı eklenebilir.
-4. Dönem borcu tutarı snapshot'tır; çalışanın ödeme planı değişse bile geçmiş borç değişmez.
-5. Şirket cüzdanı finans modülünden bireysel USDC ödemesini imzalar.
-6. Zincir başarısı sonrası borç ve muhasebe kaydı güncellenir.
+1. Record the employee's name, role, department, monthly USDC reference amount and recipient key.
+2. Selecting a period creates a payment obligation for each employee.
+3. The same employee + month is not charged again; a missing entry for an employee added later can be created for that month.
+4. The period liability amount is a snapshot; changes to the employee's payment plan do not change historical liabilities.
+5. The company wallet signs the individual USDC payment from the finance module.
+6. After on-chain success, the liability and accounting entry are updated.
 
-Bu özellik bir **ödeme planıdır**; resmi bordro, SGK, stopaj, net/brüt ücret, izin veya yan hak hesabı yapmaz.
+This feature is a **payment plan**; it does not calculate statutory payroll, Turkish social security (SGK), withholding tax, net/gross wages, leave or benefits.
 
-## 4. Veriler nerede tutuluyor?
+## 4. Where is data stored?
 
 ```mermaid
 flowchart LR
-    Company[Şirket çalışma alanı] --> Sales[Satış]
-    Company --> Purchase[Satın alma]
-    Company --> Inventory[Stok]
-    Company --> Production[Üretim]
-    Company --> Staff[İnsan kaynakları]
-    Sales --> Invoice[Fatura]
-    Purchase --> Payables[Tedarikçi borcu]
-    Staff --> Salary[Çalışan dönem borcu]
+    Company[Company workspace] --> Sales[Sales]
+    Company --> Purchase[Purchasing]
+    Company --> Inventory[Inventory]
+    Company --> Production[Production]
+    Company --> Staff[Human resources]
+    Sales --> Invoice[Invoice]
+    Purchase --> Payables[Supplier liability]
+    Staff --> Salary[Employee period liability]
     Purchase --> Inventory
     Production --> Inventory
     Sales --> Inventory
     Invoice --> Escrow[Soroban escrow]
-    Payables --> Payment[Stellar USDC ödeme]
+    Payables --> Payment[Stellar USDC payment]
     Salary --> Payment
-    Escrow --> Journal[ERP yönetim defteri]
+    Escrow --> Journal[ERP management ledger]
     Payment --> Journal
     Anchor[TRY / USDC mock Anchor] --> Escrow
 ```
 
-Normal ERP verileri SQLite'dadır: şirket, iş ortağı iletişimi, çalışan/görev, reçete, stok, sipariş ve yönetim kayıtları.
+Regular ERP data is stored in SQLite: companies, business partner contact details, employees/roles, recipes, inventory, orders and management entries.
 
-Zincirde public key'ler, USDC tutarları, escrow fatura taahhüdü/durumları ve ödeme işlemleri bulunur. İletişim bilgileri ve çalışanın İK dosyası blockchain'e yazılmaz. Tedarikçi/çalışan ödemelerinde kısa ERP ödeme kodu memo'ya girer; kişi adı, departman veya aylık ödeme dönemi memo'ya yazılmaz.
+Public keys, USDC amounts, escrow invoice commitments/states and payment transactions are on-chain. Contact details and employee HR files are not written to the blockchain. Supplier/employee payments include a short ERP payment code in the memo; personal names, departments and monthly payment periods are not included in the memo.
 
-## 5. Şirket kimliği ile cüzdan kimliği farklı
+## 5. Company identity and wallet identity are different
 
-ERP çalışma alanı `erp_workspace` HttpOnly/SameSite cookie'sindeki güçlü rastgele bearer token ile açılır; veritabanında token hash'i saklanır. Her tarayıcı oturumu ayrı bir şirket alanı görür. Referansla başka şirketin ürününe, siparişine veya çalışanına yazma engellenir.
+The ERP workspace opens with a strong random bearer token in the `erp_workspace` HttpOnly/SameSite cookie; the database stores the token hash. Each browser session sees a separate company workspace. Writing to another company's products, orders or employees by reference is blocked.
 
-Stellar yetkisi ayrıca `bridge_session` ile doğrulanır. Şirket cüzdanını eşleştirmek ve para transferi hazırlamak için gerçek imzalı cüzdan oturumu gerekir. ERP cookie'si tek başına Stellar para hareketi yetkisi vermez.
+Stellar authority is verified separately through `bridge_session`. A genuine signed wallet session is required to bind the company wallet and prepare fund transfers. The ERP cookie alone does not authorize Stellar fund movements.
 
-5 Kasım 2026 güncellemesi: İmzalı şirket üyeliği, role dayalı sunucu yetkileri, public key ile üye ekleme/iptal, şirket kimliğiyle üyelik doğrulayarak yeniden katılma ve uygulama denetim kaydı eklendi. Anonim çalışma alanı yalnızca izole demo içindir; sahiplenilen şirket imzalı üyelik gerektirir. Şirket sahibi anahtarı kurtarma/devretme ve kurumsal SSO henüz yoktur. Ayrıntılar: [kimlik ve yetkiler](../architecture/auth-and-roles.md). Müşteri, finans modülünden kendisine ait Stellar faturalarını görebilir; satıcının ERP operasyon verilerini göremez.
+November 5, 2026 update: signed company membership, role-based server permissions, adding/revoking members by public key, rejoining through membership verification with a company ID, and an application audit log have been added. Anonymous workspaces are only for isolated demos; claimed companies require signed membership. Company owner key recovery/transfer and enterprise SSO are not yet available. Details: [authentication and permissions](../architecture/auth-and-roles.md). Customers can view their own Stellar invoices through the finance module; they cannot view the merchant's ERP operational data.
 
-## 6. Muhasebe kayıtları
+## 6. Accounting entries
 
-| Olay | Borç hesabı | Alacak hesabı |
+| Event | Debit account | Credit account |
 |---|---|---|
-| Mal kabulü | Stok | Tedarikçi borçları |
-| Çalışan dönem tahakkuku | Personel giderleri | Çalışan borçları |
-| Doğrulanmış satış faturası | Müşteri alacakları | Satış gelirleri |
-| Doğrulanmış escrow fund | Escrow alacakları | Müşteri alacakları |
-| Doğrulanmış release | USDC cüzdanı | Escrow alacakları |
-| Doğrulanmış refund | Müşteri alacakları | Escrow alacakları |
-| Refund satış kapatma | Satış gelirleri | Müşteri alacakları |
-| Ödenmeden iptal/vade kapatma | Satış gelirleri | Müşteri alacakları |
-| Doğrulanmış tedarikçi ödemesi | Tedarikçi borçları | USDC cüzdanı |
-| Doğrulanmış çalışan ödemesi | Çalışan borçları | USDC cüzdanı |
+| Goods receipt | Inventory | Accounts payable |
+| Employee period accrual | Personnel expenses | Employee payables |
+| Verified sales invoice | Accounts receivable | Sales revenue |
+| Verified escrow funding | Escrow receivables | Accounts receivable |
+| Verified release | USDC wallet | Escrow receivables |
+| Verified refund | Accounts receivable | Escrow receivables |
+| Sales closure after refund | Sales revenue | Accounts receivable |
+| Unfunded cancellation/expiry | Sales revenue | Accounts receivable |
+| Verified supplier payment | Accounts payable | USDC wallet |
+| Verified employee payment | Employee payables | USDC wallet |
 
-Kayıt kimliği şirket + kaynak + olaydan türetilir; aynı doğrulama tekrarlandığında ikinci fiş oluşmaz. Tüm tutarlar USDC referansındadır. TRY kur farkı, Anchor komisyon muhasebesi, stok değerleme, COGS, vergi ve yasal hesap planı yoktur. Bu defter banka ekstresi veya yasal bilanço yerine kullanılmaz. Fiziksel iade stok hareketi bu sürümde ayrıca desteklenmediği için escrow iadesi stok miktarını otomatik geri artırmaz.
+Entry IDs are derived from company + source + event; repeating the same verification does not create a second journal entry. All amounts use USDC as the reference currency. TRY exchange differences, Anchor fee accounting, inventory valuation, COGS, taxes and a statutory chart of accounts are not included. This ledger must not be used in place of a bank statement or statutory balance sheet. Since physical return stock movements are not separately supported in this release, an escrow refund does not automatically increase stock quantities.
 
-## 7. Örnek veriler ve doğruluk
+## 7. Sample data and accuracy
 
-Örnek kayıtlar yalnızca boş workspace'te kullanıcının seçimiyle eklenir. Kayıt adlarında örnek/demo işareti ve workspace'te uyarı vardır. Örnek veri yüklemek ödeme, on-chain fatura, tahsilat, başarılı chain operation veya transaction hash oluşturmaz.
+Sample records are added only at the user's request in an empty workspace. Record names are marked as sample/demo, and the workspace displays a warning. Loading sample data does not create payments, on-chain invoices, collections, successful chain operations or transaction hashes.
 
-Örnek sipariş tutarı operasyon referansıdır; doğrulanmış Stellar tahsilatı ayrı kartta gösterilir. Kaydedilmemiş veya doğrulanmamış para hareketi başarı gibi sunulmaz.
+Sample order amounts are operational references; verified Stellar collections are shown in a separate card. Unrecorded or unverified fund movements are not presented as successful.
 
-## 8. Doğrulama ve kanıt
+## 8. Verification and evidence
 
-`npm test` şirket izolasyonunu, tutar hesaplamalarını, imzalı oturumları, stok işlemlerini, dönem borcu tekilliğini ve ERP ödeme mutabakatını doğrular.
+`npm test` verifies company isolation, amount calculations, signed sessions, stock operations, unique period liabilities and ERP payment reconciliation.
 
-`npm run contract:test`: escrow v2 için 12 Rust testi.
+`npm run contract:test`: 12 Rust tests for escrow v2.
 
-Escrow v2 teslim bildirimi, 3 günlük itiraz, bağımsız hakem ve 7 günlük sessiz hakem iadesi içerir. Kurallar: [escrow v2](../architecture/escrow-v2.md).
+Escrow v2 includes delivery reporting, a 3-day dispute window, an independent resolver and a 7-day refund fallback if the resolver remains silent. Rules: [escrow v2](../architecture/escrow-v2.md).
 
-`npm run test:erp`: iki yeni geçici Testnet hesabıyla ERP → Stellar uçtan uca test.
+`npm run test:erp`: an ERP → Stellar end-to-end test with two fresh temporary Testnet accounts.
 
-18 Eylül 2026 test sonucu:
-- Satın alma kabul edildi; stok ve tedarikçi borcu oluştu.
-- Üretim girdileri tüketildi, üç mamul üretildi.
-- Üç USDC'lik satış siparişi doğru tutarla faturalandı; farklı tutarlı giriş reddedildi.
-- TRY banka simülasyonu ve escrow fund tamamlandı.
-- ERP sevkiyatının fonu serbest bırakmadığı doğrulandı.
-- Müşteri release yaptı; ERP siparişi tahsil edildi.
-- Bir USDC tedarikçi borcu ve 0,5 USDC çalışan borcu gerçek Testnet işlemleriyle ödendi.
-- Yinelenen mal kabulü, dönem borcu, yetkisiz ve tekrar ödeme reddedildi.
-- Yedi kaynak bağlantılı yönetim kaydı oluştu.
+September 18, 2026 test results:
 
-Testnet kanıtı: [ERP v2 akışı](../../artifacts/erp-testnet-v2-proof.json).
+- A purchase was received; stock and a supplier liability were created.
+- Production inputs were consumed and three finished goods were produced.
+- A 3 USDC sales order was invoiced for the correct amount; an entry with a different amount was rejected.
+- TRY bank simulation and escrow funding were completed.
+- ERP shipping was confirmed not to release funds.
+- The customer released the funds; the ERP order was marked as collected.
+- A 1 USDC supplier liability and a 0.5 USDC employee liability were paid through real Testnet transactions.
+- Duplicate goods receipt, duplicate period liabilities, unauthorized payments and repeat payments were rejected.
+- Seven source-linked management entries were created.
 
-## 9. Sonraki kapsam
+Testnet evidence: [ERP v2 workflow](../../artifacts/erp-testnet-v2-proof.json).
 
-Güncel üyelik/rol ve uygulama audit kaydı eklendi. Sonraki kapsam: sahip cüzdanı kurtarma, değişmez audit arşivi, satış/tedarik onay adımları, fiziksel iade, kısmi teslimat, lot/seri/depo, maliyetlendirme, gerçek ERP adapter'ı ve export. Bunlar mevcut hackathon prototipinde tamamlanmış özellik gibi sunulmaz.
+## 9. Future scope
 
-Stellar kısmında: gönderim journal'ı, worker kapasitesi ve izleme, webhook ile mutabakat, çok imzalı şirket hesabı, toplu ödeme, fee sponsorship ve ileride gerçek anchor entegrasyonu. Şimdiki ağ yalnızca Testnet'tir.
+Membership/roles and an application audit log have been added. Future scope includes owner wallet recovery, an immutable audit archive, sales/purchasing approval steps, physical returns, partial delivery, lot/serial/warehouse tracking, costing, a real ERP adapter and exports. These are not presented as completed features of the current hackathon prototype.
+
+For Stellar: a submission journal, worker capacity and monitoring, webhook-based reconciliation, a multisig company account, batch payments, fee sponsorship and eventual real Anchor integration. The current network is Testnet only.

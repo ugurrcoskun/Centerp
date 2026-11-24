@@ -1,38 +1,38 @@
-# Ürün kapsamı ve Türkiye için üretime geçiş sınırı
+# Product scope and production boundaries for Türkiye
 
-Son inceleme: 5 Kasım 2026. Durum: Testnet prototipi; hukuki uygunluk onayı verilmiş bir üretim hizmeti değildir.
+Last reviewed: November 5, 2026. Status: Testnet prototype; not a production service approved for legal compliance.
 
-Centerp'in ana ürünü ERP kayıtları ve mutabakattır. Türkiye için değerlendirilecek ürün konumlandırması **TL anchor çıkışı ve ERP mutabakatı**dır. Bu bir üretim taahhüdü veya yalnızca para birimini değiştirerek sağlanan bir mevzuat istisnası değildir.
+Centerp's core product is ERP records and reconciliation. The product positioning to be evaluated for Türkiye is **TL Anchor off-ramp and ERP reconciliation**. This is neither a production commitment nor a regulatory exemption obtained simply by changing the currency.
 
-## Mevcut demo
+## Current demo
 
-ERP iş kaydı → cüzdan imzası → Testnet USDC/escrow → doğrulanmış işlem → yönetim defteri.
+ERP business record → wallet signature → Testnet USDC/escrow → verified transaction → management ledger.
 
-Harici TR Mock Anchor, TRY banka hareketlerini simüle eder. Gerçek TL, banka havalesi ve Mainnet varlıkları kullanılmaz. Tedarikçi ve çalışan ödeme ekranları da Testnet gösterimleridir; Türkiye'de kripto ile mal/hizmet veya ücret ödeme teklifi değildir. Yönetim defteri yasal muhasebe, bordro veya e-fatura yerine geçmez.
+The external TR Mock Anchor simulates TRY bank movements. No real TL, bank transfers or Mainnet assets are used. The supplier and employee payment screens are also Testnet demonstrations; they do not offer payment for goods/services or wages in crypto in Türkiye. The management ledger does not replace statutory accounting, payroll or e-invoicing.
 
-## Değerlendirilecek üretim akışı
+## Production flow to be evaluated
 
-İşletmenin varlık dönüşümü talebi → uygun yetkilere sahip dış hizmet sağlayıcısında dönüşüm → işletmenin banka hesabına TL çıkışı → banka/sağlayıcı kanıtının ERP ile mutabakatı.
+Business requests asset conversion → conversion by an appropriately authorized external service provider → TL off-ramp to the business's bank account → reconciliation of bank/provider evidence with the ERP.
 
-Bu akış henüz entegre edilmiş değildir. Fatura ödemesi ile varlık dönüşümü arasındaki ekonomik ilişki, tarafların ülkeleri, transferlerin amacı ve sağlayıcıların yetkileri uzman tarafından değerlendirilecektir. Aynı fatura ödemesini USDC üzerinden dolaştırıp sonunda TL'ye çevirmek kendiliğinden uygun kabul edilmez.
+This flow has not yet been integrated. A specialist will assess the economic relationship between invoice payment and asset conversion, the parties' countries, the purpose of the transfers and the providers' authorizations. Routing the same invoice payment through USDC and converting it to TL at the end is not automatically considered compliant.
 
-| Taraf | Mevcut görev / üretimde açıklığa kavuşacak konu |
+| Party | Current role / matters to clarify for production |
 | --- | --- |
-| Centerp | ERP kayıtlarını ve doğrulanan kanıtları ilişkilendirir; kullanıcı özel anahtarını almaz. Üretimde faaliyet ve sorumluluk kapsamı ayrıca değerlendirilecek. |
-| İşletme ve kullanıcı | İş kayıtları, imzalı yetkilendirme ve alıcı bilgilerinden sorumlu. Çok kullanıcılı erişim ile zincir imzası farklı yetkilerdir. |
-| Escrow kontratı | Testnet token bakiyesini kontrat kurallarına göre tutar. Cüzdan anahtarının uygulamada olmaması, escrow'da fon tutulmadığı anlamına gelmez. |
-| Dış anchor / hizmet sağlayıcısı | Demo sağlayıcısı gerçek banka hizmeti sunmaz. Üretimde lisans/faaliyet kapsamı, KYC/AML, saklama, dönüşüm, banka çıkışı ve itiraz sorumlulukları sözleşmeyle netleşmeli. |
-| Banka / ödeme hizmeti tarafı | TL hareketinin gerçekleştiğine ilişkin kanıt ve izin verilen fon akışı sağlanmalı; hangi kuruluşun hangi aktarımı yapabileceği incelenmeli. |
+| Centerp | Links ERP records to verified evidence; does not receive users' private keys. Its scope of activities and responsibilities in production will be assessed separately. |
+| Business and user | Responsible for business records, signed authorization and recipient information. Multi-user access and on-chain signing are distinct permissions. |
+| Escrow contract | Holds Testnet token balances under the contract rules. The application not holding wallet keys does not mean the escrow holds no funds. |
+| External Anchor / service provider | The demo provider does not offer real banking services. In production, licensing/activity scope, KYC/AML, custody, conversion, bank off-ramp and dispute responsibilities must be clarified by contract. |
+| Bank / payment service party | Evidence of the TL movement and a permitted fund flow must be provided; which institution may perform each transfer must be reviewed. |
 
-## Üretime geçişte açık işler
+## Open work before production
 
-- Gerçek fon akışının ve Türkiye'deki kullanım amacının yazılı hukuki değerlendirmesi. Sorumlu: proje sahibi ve görevlendireceği Türkiye mevzuatı uzmanı.
-- Anchor ve banka/ödeme tarafının güncel yetki durumunun doğrulanması; ücretler, saklama, KYC/AML ve başarısız transfer/iade sorumlulukları. Sorumlu: proje sahibi ve seçilen sağlayıcı.
-- Veri koruma, ticari kayıt, vergi/muhasebe ve sözleşme yükümlülüklerinin değerlendirilmesi. Sorumlu: ilgili hukuk/mali müşavirlik uzmanları.
-- Gerçek TL çıkışı ve kanıt mutabakatının uygulanması; demo verisinin üretim verisi gibi sunulmaması. Sorumlu: geliştirme ekibi; önceki değerlendirmelere bağlı.
+- Written legal assessment of the actual fund flow and intended use in Türkiye. Owner: project owner and an appointed specialist in Turkish regulations.
+- Verification of the current authorizations of the Anchor and bank/payment party; fees, custody, KYC/AML and responsibilities for failed transfers/refunds. Owner: project owner and selected provider.
+- Assessment of data protection, commercial records, tax/accounting and contractual obligations. Owner: relevant legal/accounting specialists.
+- Implementation of a real TL off-ramp and evidence reconciliation; demo data must not be presented as production data. Owner: development team, subject to the preceding assessments.
 
-Bu işler tamamlanmadan bu prototip Türkiye'de gerçek para ile ödeme hizmeti olarak açılmayacaktır. Teknik değişiklikler hukuki değerlendirme kutusunu kapatmaz.
+Until this work is complete, this prototype will not be launched as a real-money payment service in Türkiye. Technical changes do not complete the legal assessment requirement.
 
-## Birincil kaynaklar
+## Primary sources
 
-TCMB'nin [Ödemelerde Kripto Varlıkların Kullanılmamasına Dair Yönetmelik](https://www.resmigazete.gov.tr/eskiler/2021/04/20210416-4.htm) madde 3–4 hükümleri doğrudan/dolaylı kullanım ve hizmet modellerini kapsar. Güncel düzenleme listesi için [TCMB Ödeme Hizmetleri](https://www.tcmb.gov.tr/wps/wcm/connect/TR/TCMB%20TR/Main%20Menu/Temel%20Faaliyetler/Odeme%20Hizmetleri) sayfası kullanılmalıdır. Yukarıdaki üretim sınırı bu kaynaklardan çıkarılan ihtiyatlı ürün kararıdır; somut model için hukuki görüş yerine geçmez.
+Articles 3–4 of the Central Bank of the Republic of Türkiye's (CBRT) [Regulation on the Disuse of Crypto Assets in Payments](https://www.resmigazete.gov.tr/eskiler/2021/04/20210416-4.htm) cover direct/indirect use and service models. Use the [CBRT Payment Services](https://www.tcmb.gov.tr/wps/wcm/connect/TR/TCMB%20TR/Main%20Menu/Temel%20Faaliyetler/Odeme%20Hizmetleri) page for the current list of regulations. The production boundary above is a cautious product decision inferred from these sources; it does not replace a legal opinion on the specific model.

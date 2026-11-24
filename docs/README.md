@@ -1,9 +1,9 @@
-# Centerp dokümantasyonu
+# Centerp documentation
 
-| Bölüm | Belgeler |
+| Section | Documents |
 | --- | --- |
-| Proje | [Ürün kapsamı](project/product-scope.md), [yol haritası](project/roadmap.md), [hukuki kapsam](project/legal-scope.md) |
-| Mimari | [Kimlik ve roller](architecture/auth-and-roles.md), [escrow v2](architecture/escrow-v2.md) |
-| Operasyon | [Kontrat doğrulaması](operations/contract-verification.md), [ortam değişkenleri](../.env.example) |
-| Geliştirme | [Yerel kurulum ve kontroller](../README.md#run-locally) |
-| Tasarım ve demo | [Arayüz rehberi](design/brand-master.md), [ürün demosu](../README.md#see-it-working) |
+| Project | [Product scope](project/product-scope.md), [roadmap](project/roadmap.md), [legal scope](project/legal-scope.md) |
+| Architecture | [Authentication and roles](architecture/auth-and-roles.md), [escrow v2](architecture/escrow-v2.md) |
+| Operations | [Contract verification](operations/contract-verification.md), [environment variables](../.env.example) |
+| Development | [Local setup and checks](../README.md#run-locally) |
+| Design and demo | [Interface guide](design/brand-master.md), [product demo](../README.md#see-it-working) |

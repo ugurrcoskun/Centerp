@@ -1,36 +1,36 @@
-# Centerp yol haritası
+# Centerp roadmap
 
-Güncelleme: 5 Kasım 2026. Aşağıdaki süreler geliştirme tahminidir; dış onay ve Mainnet tarihi taahhüdü değildir.
+Updated: November 5, 2026. The timeframes below are development estimates, not commitments to external approval or a Mainnet launch date.
 
-| Aşama | Hedef aralık | Sorumlu | Teslim / geçiş kriteri |
+| Phase | Target timeframe | Owner | Deliverable / acceptance criteria |
 | --- | --- | --- | --- |
-| Güvenli Testnet sürümü | Mevcut düzeltme çalışması | Geliştirme ekibi | Süreli escrow ve itiraz, kalıcı auth anahtarı, şirket üyeliği/roller, test CI, lisans; açık dış bağımlılıkların kaydı |
-| Sürüm kanıtı | Kaynak sürümü yayınlandıktan sonra 1 hafta | Repo sahibi + geliştirme ekibi | CI yeşil, WASM/kaynak doğrulama kanıtı, doğru kontrat adresi, yeni uçtan uca testler; eski fonların envanteri |
-| Kullanıcı pilotu | Güvenli Testnet sonrası 2–4 hafta | Ürün sahibi | En az iki işletme temsilcisiyle görev bazlı test; itiraz, teslim etmeme ve rol iptalinin denenmesi; bulguların kapanması |
-| Türkiye üretim modelinin değerlendirilmesi | Pilotla paralel; süre dış taraflara bağlı | Ürün sahibi + hukuk/mali müşavirlik + sağlayıcı | TL çıkışı/mutabakat fon akışı için yazılı değerlendirme, sağlayıcı yetki/sözleşmeleri ve gerçek TL çıkışının entegrasyon tasarımı |
-| Üretim hazırlığı | Önceki kapılar geçildikten sonra 4–8 hafta tahmini | Geliştirme/operasyon ve bağımsız incelemeci | Güvenlik incelemesi; anahtar kurtarma/rotasyon, worker izleme/uyarı, KYC/veri sorumlulukları, destek ve itiraz hizmeti; kapasite testleri |
-| Koşullu Mainnet pilotu | Tarih belirlenmedi | Ürün sahibi | Yukarıdaki kapılar, limitli pilot bütçesi ve geri dönüş planı kabul edilmiş; üretim anahtarları ve gerçek sağlayıcı ayrı yapılandırılmış |
+| Secure Testnet release | Current remediation work | Development team | Time-bounded escrow and disputes, persistent authentication key, company membership/roles, test CI, license; documented outstanding external dependencies |
+| Release evidence | Within 1 week after the source release is published | Repository owner + development team | Passing CI, WASM/source verification evidence, correct contract address, new end-to-end tests; inventory of funds in the old contract |
+| User pilot | 2–4 weeks after the secure Testnet release | Product owner | Task-based testing with at least two business representatives; test disputes, non-delivery and role revocation; resolve findings |
+| Evaluation of the Türkiye production model | In parallel with the pilot; timing depends on external parties | Product owner + legal/accounting advisers + provider | Written assessment of the TL off-ramp/reconciliation fund flow, provider authorizations/agreements and integration design for a real TL off-ramp |
+| Production readiness | Estimated 4–8 weeks after the preceding gates are passed | Development/operations team and independent reviewer | Security review; key recovery/rotation, worker monitoring/alerts, KYC/data responsibilities, support and dispute services; capacity tests |
+| Conditional Mainnet pilot | No date set | Product owner | All gates above passed, limited pilot budget and rollback plan accepted; production keys and real provider configured separately |
 
-## Bir sonraki somut hedef
+## Next concrete milestone
 
-Kaynak doğrulanmış Testnet sürümünü, test sonuçlarını ve kullanıcı pilotu senaryolarını tek sürüm paketi olarak hazırlamak. Sürüm için GitHub CI sonuçları ve [explorer kaynak doğrulaması](../operations/contract-verification.md) kontrol edilir.
+Prepare the source-verified Testnet release, test results and user pilot scenarios as a single release package. Check GitHub CI results and [explorer source verification](../operations/contract-verification.md) for the release.
 
-## Instaward / SCF adımı
+## Instaward / SCF step
 
-İlk başvuru önerisi, hakem/worker operasyonu ve pilot kanıtlarını tamamlayan sınırları belirli bir **Instaward sprinti**dir. Resmi kurallar yerel Ambassador Chapter üzerinden değerlendirmeyi ve en fazla 30 günlük somut teslim kapsamını tarif ediyor. Önceki çalışmaların devamına ilişkin uygunluk ayrıca teyit edilecek. Başvuru gönderimi ve fon kararı henüz yoktur. Kaynak: [Instawards resmi kuralları](https://stellar.gitbook.io/scf-handbook/scf-awards/instawards/official-rules).
+The proposed first application is a bounded **Instaward sprint** to complete resolver/worker operations and pilot evidence. The official rules describe evaluation through the local Ambassador Chapter and concrete deliverables within a maximum of 30 days. Eligibility for work that continues previous efforts will be confirmed separately. No application has been submitted and no funding decision has been made. Source: [Instawards official rules](https://stellar.gitbook.io/scf-handbook/scf-awards/instawards/official-rules).
 
-Hazırlanacak paket: demo bağlantısı, açık kaynak repo/lisans, kontrat doğrulama ve test kanıtları, kullanıcı bulguları, ölçülebilir sprint çıktıları, iş kalemi bazlı bütçe ve ekip bilgisi. Ürün sahibi gerçek ekip ve bütçe bilgilerini tamamlayacak; geliştirme ekibi teknik kanıtları hazırlayacak. Sonraki adım bu paketle Chapter uygunluğunu ve başvuru kanalını doğrulamaktır; bu çalışma kapsamında kimseye mesaj gönderilmez.
+The package to prepare includes the demo link, open-source repository/license, contract verification and test evidence, user findings, measurable sprint outcomes, an itemized budget and team information. The product owner will complete the actual team and budget information; the development team will prepare the technical evidence. The next step is to use this package to confirm Chapter eligibility and the application channel; no messages will be sent to anyone as part of this work.
 
-Pilot doğrulaması ve güvenlik/operasyon kapsamı netleştiğinde SCF Build için daha geniş teslim planı değerlendirilebilir. Programın güncel seçenekleri için [resmi SCF sitesi](https://communityfund.stellar.org/) kullanılmalı; tur tarihleri ve finansman varsayımları başvurudan önce yeniden kontrol edilmelidir.
+Once pilot validation and the security/operations scope are clear, a broader delivery plan for SCF Build can be considered. Use the [official SCF website](https://communityfund.stellar.org/) for current program options; round dates and funding assumptions must be checked again before applying.
 
-## Mainnet'e geçiş kapıları
+## Mainnet transition gates
 
-- Süre sonu sonuçlandırma ve açık itirazın nihai çözümü bağımsız incelemeden geçti.
-- Hakem hizmetinin kim tarafından, hangi kurallarla ve hangi yanıt süresiyle verileceği taraflara açık.
-- Worker anahtarı/fon bakiyesi, zamanlayıcı, TTL bakımı, gecikme ve başarısızlık uyarıları operasyon ortamında doğrulandı.
-- Auth anahtarı ve şirket cüzdanı için ayrı saklama, kurtarma ve rotasyon süreçleri var; rol sistemi bir cüzdan imzasının yerini tutmuyor.
-- Eski kontrat fonları ve yeni kontrat adresine geçiş kayıtlı; eski kanıtlar yeni sürüme aitmiş gibi sunulmuyor.
-- [Hukuki kapsam](legal-scope.md) belgesindeki dış değerlendirmeler ve gerçek anchor/banka ilişkisi tamamlandı.
-- Gerçek TL çıkışının kanıtları, muhasebe kapsamı, destek, izleme ve veri koruma sorumlulukları doğrulandı.
+- Deadline finalization and final resolution of open disputes have passed independent review.
+- The parties know who provides the resolver service, under which rules and with what response time.
+- The worker key/funding balance, scheduler, TTL maintenance, delay alerts and failure alerts have been verified in the operational environment.
+- Separate storage, recovery and rotation procedures exist for the authentication key and company wallet; the role system does not replace a wallet signature.
+- Funds in the old contract and the transition to the new contract address are documented; historical evidence is not presented as evidence for the new release.
+- The external assessments and real Anchor/bank relationship described in the [legal scope](legal-scope.md) document are complete.
+- Evidence of real TL off-ramp transactions, accounting scope, support, monitoring and data protection responsibilities have been verified.
 
-Mainnet fonları bu geliştirme çalışmasının kapsamında kullanılmaz.
+Mainnet funds will not be used as part of this development work.

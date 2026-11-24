@@ -1,34 +1,34 @@
-# Kimlik, üyelik ve ödeme onayı
+# Authentication, membership and payment approval
 
-## Yerel kurulum
+## Local setup
 
-`npm run setup:local` yalnızca eksik değerleri `.env.local` içine yazar. `SEP10_SIGNING_SECRET` kalıcı sunucu anahtarıdır; `APP_ORIGIN` güvenilen dış origin'dir. Lokal HTTP yalnızca localhost/127.0.0.1 için desteklenir. Üretimde HTTPS ve gerçek uygulama domain'i gerekir. Anahtarı her cold start'ta üretmeyin; aynı servisin bütün örnekleri aynı secret'ı kullanmalıdır.
+`npm run setup:local` writes only missing values to `.env.local`. `SEP10_SIGNING_SECRET` is the persistent server key; `APP_ORIGIN` is the trusted external origin. Local HTTP is supported only for localhost/127.0.0.1. Production requires HTTPS and the actual application domain. Do not generate a new key on every cold start; all instances of the same service must use the same secret.
 
-`/.well-known/stellar.toml` sadece public key ve ağ/endpoint bilgilerini yayınlar. `/api/auth` GET challenge, POST imzalı `transaction` alır ve EdDSA JWT döndürür. Uygulamanın mevcut `/api/bridge` challenge/session akışı aynı anahtarı kullanır. Desteklenen hesaplar tek Ed25519 `G…` hesaplarıdır; multisig, muxed/memo hesapları ve client_domain desteği eklenmemiştir. JWT yanında sunucudaki oturum kaydı da gerekir; böylece logout token'ı iptal eder. Uygulama API'ları HttpOnly cookie ile oturum kullanır.
+`/.well-known/stellar.toml` publishes only the public key and network/endpoint information. `/api/auth` provides a challenge via GET, accepts a signed `transaction` via POST and returns an EdDSA JWT. The application's existing `/api/bridge` challenge/session flow uses the same key. Only single Ed25519 `G…` accounts are supported; multisig, muxed/memo accounts and client_domain support have not been added. A server-side session record is required alongside the JWT, allowing logout to revoke the token. Application APIs use sessions through an HttpOnly cookie.
 
-Challenge sunucu imzası, ağ, domain, zaman aralığı ve kaydedilmiş işlem hash'i ile doğrulanır. Challenge tekrar kullanılamaz. Sunucu anahtarı/domain değişiminden önceki challenge'lar reddedilir. Oturum ömrü 12 saattir. Anahtar değişiminde mevcut oturumları da iptal etmek isteniyorsa `auth_session` kayıtları kontrollü biçimde temizlenmelidir; yeni public key ile keşif dosyası yeniden kontrol edilir. Harici anchor'ın imza anahtarı bunun yerine kullanılmaz.
+Challenges are verified against the server signature, network, domain, time window and stored transaction hash. A challenge cannot be reused. Challenges issued before a server key/domain change are rejected. Sessions last 12 hours. If existing sessions must also be revoked during a key change, `auth_session` records must be cleared in a controlled manner; the discovery file must be checked again with the new public key. The external Anchor's signing key is not used in place of this key.
 
-## Şirket ve roller
+## Company and roles
 
-Anonim çalışma alanı izole demo verisi içindir. İlk cüzdan eşleştirmesi şirket sahibini oluşturur; sahiplenilen şirket artık anonim cookie ile okunamaz veya değiştirilemez. Eski cüzdanı bağlı şirketin sahibi, kendi imzalı oturumuyla `linkWallet` işlemini yaparak açıkça üyelik modeline geçebilir. Bir cüzdan başka şirketten sessizce sökülmez.
+An anonymous workspace is for isolated demo data. The first wallet binding creates the company owner; a claimed company can no longer be read or modified using an anonymous cookie. The owner of a legacy company with a bound wallet can explicitly migrate to the membership model by calling `linkWallet` with their signed session. A wallet is never silently detached from another company.
 
-| Rol | Kayıt okuma | Operasyon kaydı | Fatura taslağı | Ödeme onayı | Üye/şirket yönetimi |
+| Role | Read records | Operational records | Invoice drafts | Payment approval | Member/company management |
 | --- | --- | --- | --- | --- | --- |
-| owner | Evet | Evet | Evet | Evet | Evet; sahibi kaldıramaz |
-| admin | Evet | Evet | Evet | Evet | Evet; owner veremez/kaldıramaz |
-| operator | Evet | Evet | Hayır | Hayır | Hayır |
-| billing | Evet | Hayır | Evet | Hayır | Hayır |
-| approver | Evet | Hayır | Hayır | Evet | Hayır |
-| viewer | Evet | Hayır | Hayır | Hayır | Hayır |
+| owner | Yes | Yes | Yes | Yes | Yes; cannot remove the owner |
+| admin | Yes | Yes | Yes | Yes | Yes; cannot grant/remove owner status |
+| operator | Yes | Yes | No | No | No |
+| billing | Yes | No | Yes | No | No |
+| approver | Yes | No | No | Yes | No |
+| viewer | Yes | No | No | No | No |
 
-API bir kullanıcıya birden fazla rol tanımlayabilir. Arayüz temel bir rol seçer. Yönetici üyenin public key'ini ekler; kullanıcı kendi cüzdanını bağladıktan sonra şirket kimliğiyle geçiş yapar. Şirket kimliği tek başına giriş hakkı vermez. İptal edilmiş üyelik aynı cookie ile de erişemez. Sahip cüzdanını kaybederse self-service sahiplik kurtarma/devri bu sürümde yoktur.
+The API can assign multiple roles to a user. The interface selects a primary role. An administrator adds the member's public key; after connecting their own wallet, the user switches using the company ID. A company ID alone does not grant access. Revoked members cannot access the company even with the same cookie. Self-service ownership recovery/transfer is not available in this release if the owner loses their wallet.
 
-Fatura taslağı billing tarafından oluşturulabilir; merchant adresi şirket cüzdanıdır ve zincir kaydını şirket cüzdanı sahibi imzalar. Rol eklemek özel anahtar veya zincir yetkisi paylaşmaz. Bu sürüm şirket cüzdanı için çoklu imza delegasyonu uygulamaz.
+A billing member can create an invoice draft; the merchant address is the company wallet, and the company wallet holder signs the on-chain registration. Assigning a role does not share a private key or on-chain authority. This release does not implement multisig delegation for the company wallet.
 
-Giden ERP ödemesi önce approver/owner/admin tarafından onaylanır. Onay tutara ve alıcı cüzdanına bağlıdır; 24 saat geçerlidir. Alıcı değişirse, onaylayan üyenin yetkisi iptal edilirse veya onay yenilenirse eski hazırlanan işlem gönderilemez. Son transfer şirket cüzdanı tarafından imzalanır. Şirket sahibi hem hazırlama hem onay yetkisine sahiptir; zorunlu iki ayrı kişi kuralı bu sürümde yoktur. Gerçek zincir anahtarını elinde bulunduran kişinin Centerp dışından yaptığı işlemler uygulama rolleriyle engellenemez.
+An outgoing ERP payment is first approved by an approver/owner/admin. Approval is bound to the amount and recipient wallet and remains valid for 24 hours. If the recipient changes, the approving member's authority is revoked or approval is renewed, the previously prepared transaction can no longer be submitted. The final transfer is signed by the company wallet. The company owner has both preparation and approval permissions; this release does not enforce a two-person rule. Application roles cannot prevent a person holding the actual on-chain key from transacting outside Centerp.
 
-Yetki ve finansal işlem kayıtları `erp_audit` altında tutulur ve owner/admin ekranında görünür. Bu kayıt uygulama düzeyindedir; harici değişmez audit arşivi henüz yoktur.
+Authorization and financial activity records are stored under `erp_audit` and are visible in the owner/admin interface. This is an application-level log; an external immutable audit archive is not yet available.
 
-## Dağıtımda yapılacak kontrol
+## Deployment checks
 
-Kalıcı secret değerleri deployment sağlayıcısına güvenli şekilde aktarılmalı; secret değerleri issue/PR veya sohbette paylaşılmamalıdır. Public `SIGNING_KEY` yeniden başlatma öncesi/sonrası aynı kalmalı ve imzalı cüzdan bağlantısı çalışmalıdır. Kalıcı veritabanı yapılandırılmadan çok sunuculu oturum testi tamamlanmış sayılmaz. Yerel `.env.local` dosyasını oluşturmak production secret kurulumu anlamına gelmez.
+Persistent secrets must be transferred securely to the deployment provider; secret values must not be shared in issues/PRs or chat. The public `SIGNING_KEY` must remain the same before/after restart, and signed wallet connection must work. Multi-server session testing is not complete until a persistent database is configured. Creating a local `.env.local` file does not constitute production secret setup.
