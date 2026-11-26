@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "reviewDate": "2026-11-26",
+  "timezone": "Europe/Istanbul",
+  "reviewType": "internal-code-review-and-deterministic-regression-tests",
+  "independentAudit": false,
+  "productionApproval": false,
+  "scope": "invoice-escrow v2; local native-host tests and WASM build; supporting keeper/auth regression tests",
+  "baseCommit": "1a6ede7b9d71c9f33bea26340aae64caca77a6f0",
+  "workingTreeContainsUncommittedReviewChanges": true,
+  "runtimeContractChanged": false,
+  "reviewedFileSha256": {
+    "contracts/invoice-escrow/src/lib.rs": "678cb84822badcbcd787e8ce7df993b17a368c4dff74a97dec70e44b6fdf73b9",
+    "contracts/invoice-escrow/Cargo.toml": "9b264fc6aaa388777d276920fb8d9e39105af8963aced09afc1ebd8616106d03",
+    "contracts/invoice-escrow/Cargo.lock": "7fcc6221940bdb47587bc0b85003c1dc2c1ed10906ed3ef21b6bf6252d7a59f1",
+    "rust-toolchain.toml": "6aef79c05dc23434632d62f886a179df3157f2867d2f0e6dae2f95cdb3080aff",
+    "contracts/invoice-escrow/src/test.rs": "a928d851d28152cc95dacae32cf27b51fb84a1bf6f94d0fdb4173acd126cbb4b",
+    "lib/keeper.ts": "10aa9a54c4bae986a88eb80e2cb3fdb0c46bd917ca0aed98dfdb97d7159cc988",
+    "tests/keeper.test.ts": "fd1428ed46bd03a7aabcc7bef443f35d326adb17051fcc835bd0d2bc981c4fb4",
+    "tests/security.test.ts": "0983f53bfb1cc4d387d4395d18f1fed7b6712ab9d50d58984c485d7699b41548",
+    "docs/architecture/escrow-v2.md": "bf7246ffcc38deedb4f6dcb56f4ad1c1b9873751333bd23e78bfd2f56ff3c9a7"
+  },
+  "toolchain": {
+    "rust": "1.93.0",
+    "stellarCli": "28.1.0",
+    "sorobanSdk": "28.0.0",
+    "node": "v24.13.0"
+  },
+  "checks": [
+    {
+      "command": "npm run contract:test",
+      "exitCode": 0,
+      "passed": 19,
+      "failed": 0,
+      "testNames": [
+        "settlement_conserves_tokens_and_rejects_replay",
+        "refund_and_timeout_do_not_pay_the_wrong_party",
+        "validates_amount_identity_and_duplicate",
+        "rejects_unsigned_calls",
+        "buyer_and_merchant_authority_are_required_on_each_transfer",
+        "insufficient_token_balance_rolls_back_invoice_state",
+        "silent_buyer_releases_only_after_the_full_dispute_window",
+        "absent_merchant_refunds_at_delivery_deadline",
+        "dispute_blocks_release_and_an_absent_resolver_cannot_lock_funds",
+        "resolver_can_only_pay_the_fixed_parties_and_cannot_replay",
+        "new_delivery_and_dispute_actions_require_the_correct_auth",
+        "failed_timeout_transfer_rolls_back_and_other_invoices_keep_their_funds",
+        "wrong_signers_cannot_use_privileged_actions",
+        "creation_enforces_amount_and_deadline_boundaries",
+        "merchant_namespaces_isolate_identical_invoice_ids_and_balances",
+        "get_renews_invoice_and_instance_ttl_without_changing_terms",
+        "all_terminal_states_reject_every_lifecycle_action_and_id_reuse",
+        "funding_requires_the_exact_buyer_authorization_tree",
+        "buyer_and_merchant_roles_cannot_be_swapped"
+      ]
+    },
+    {
+      "command": "npm run contract:build",
+      "exitCode": 0,
+      "wasmSizeBytes": 10295,
+      "wasmSha256": "83ef135ba7680cec7677fa742dfbb7f81d8aff8de5fe3fdf4460fa5d297cad58"
+    },
+    {
+      "command": "npm test",
+      "exitCode": 0,
+      "passed": 32,
+      "failed": 0
+    },
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0
+    }
+  ],
+  "newSecurityTests": [
+    "wrong_signers_cannot_use_privileged_actions",
+    "creation_enforces_amount_and_deadline_boundaries",
+    "merchant_namespaces_isolate_identical_invoice_ids_and_balances",
+    "get_renews_invoice_and_instance_ttl_without_changing_terms",
+    "all_terminal_states_reject_every_lifecycle_action_and_id_reuse",
+    "funding_requires_the_exact_buyer_authorization_tree",
+    "buyer_and_merchant_roles_cannot_be_swapped"
+  ],
+  "deploymentComparison": {
+    "network": "TESTNET",
+    "contractId": "CDJKNS4FOHGESEKME27CQ4E4Z3CQ2JOF5W6ZEML63E47WFVNTZCANABZ",
+    "deploymentRecord": "artifacts/deployment.json",
+    "recordedWasmSha256": "83ef135ba7680cec7677fa742dfbb7f81d8aff8de5fe3fdf4460fa5d297cad58",
+    "localWasmMatchesRecordedDeployment": true,
+    "runtimeSourceFilesSha256": "64756821fbf7bd5ac772f8b0f6301afd8972428424fb3554302c47bf7d942a0a",
+    "runtimeSourceMatchesDeploymentFingerprint": true,
+    "liveNetworkRevalidated": false,
+    "historicalVerifiedSourceCommit": "465c0a49c185707e49c3ab5c8dfda7f61e24b0a3"
+  },
+  "openItems": [
+    "Live archive-restoration drill",
+    "Current hosting keeper cron and alert delivery",
+    "Out-of-application invoice inventory and TTL maintenance",
+    "Current token issuer permissions and freeze/clawback behavior",
+    "Fuzz/property campaign",
+    "Dependency vulnerability scan",
+    "Independent specialist audit"
+  ],
+  "networkTransactionsSubmitted": false,
+  "deploymentPerformed": false,
+  "report": "docs/security/soroban-checklist.md",
+  "recoveryRunbook": "docs/operations/escrow-recovery.md",
+  "limitations": [
+    "Authorization tests use SDK mocks, not live signature cryptography.",
+    "Existing Testnet proofs are historical, not rerun in this review.",
+    "Passing checks do not prove absence of vulnerabilities.",
+    "No exhaustive frontend/API audit or production readiness certification."
+  ]
+}
