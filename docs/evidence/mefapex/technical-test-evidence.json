@@ -1,0 +1,160 @@
+{
+  "completedAt": "2026-11-26T12:56:37.303Z",
+  "executionType": "Centerp-team-operated technical validation",
+  "participantOperated": false,
+  "independentCompanyActivation": false,
+  "network": "TESTNET",
+  "origin": "http://127.0.0.1:3107",
+  "status": "direct-USDC-ERP-escrow-flow-passed",
+  "anchor": {
+    "status": "blocked",
+    "error": "ENOTFOUND tr-mock-anchor.fly.dev",
+    "testedOnThisRun": false
+  },
+  "funding": {
+    "network": "TESTNET",
+    "successful": true,
+    "hash": "7314cab490b2afbfaed415a9608d0a6f3c53abe16a8823365d487e6d1013ce57",
+    "ledger": 5934825,
+    "account": "GDJ5BTQP5XZYVBGSPGHZIWWUPVPUMOLCH57AR3IYBBR6REA5VVBL7FPK",
+    "testUsdc": "5",
+    "route": "Stellar Testnet DEX, not Mock Anchor"
+  },
+  "companyId": "1b2d98c9-c678-4e03-84dd-50e1aa1a643e",
+  "companyName": "Mefapex de\u011ferlendirmesi - Centerp ekip testi",
+  "merchant": "GDOBWI2R7OCL67FQ3FZIGS7HBYAZHRAU54ALFR3L2W5RHGL5KD75HBAS",
+  "buyer": "GDJ5BTQP5XZYVBGSPGHZIWWUPVPUMOLCH57AR3IYBBR6REA5VVBL7FPK",
+  "invoiceId": "e8a597659d3a94d8996b190d16067a0ef7c01ac93d124d23ba9ff1916e3f821a",
+  "contract": "CDJKNS4FOHGESEKME27CQ4E4Z3CQ2JOF5W6ZEML63E47WFVNTZCANABZ",
+  "salesOrderId": "52f33a7f-48db-4014-99b0-bd2f729adae9",
+  "finalInvoiceStatus": "released",
+  "finalMerchantUsdc": "1.5000000",
+  "finalBuyerUsdc": "3.5000000",
+  "journalEntryCount": 7,
+  "payables": [
+    {
+      "id": "fd94dd4b-b10f-4437-940c-ce0e2c6af6f7",
+      "status": "paid",
+      "amount": "0.5000000",
+      "hash": "08b3418f560293e19e45d06964f086f12bc20a1a5bd537a1f7bc501f616dade1"
+    },
+    {
+      "id": "84b9ffd9-dc91-44fa-87a5-ac4de8610f5c",
+      "status": "paid",
+      "amount": "1.0000000",
+      "hash": "ce0ae27c03d487f81e53d5373ce7280532b2ae6d5b72fcf4a1a6221acb9eb674"
+    }
+  ],
+  "transactions": [
+    {
+      "kind": "trustline",
+      "hash": "4ebf5b4cad7226194b58c32f3046499bb439aa71fc9ee2cc7f5ada98f337a3b3",
+      "account": "GDJ5BTQP5XZYVBGSPGHZIWWUPVPUMOLCH57AR3IYBBR6REA5VVBL7FPK",
+      "createdAt": "2026-11-26T12:50:43Z",
+      "successful": true
+    },
+    {
+      "kind": "fund",
+      "hash": "a60828583396e62b67ee2f4410691e6b3d346d21db4175e5be777072afcc23f9",
+      "invoiceId": "e8a597659d3a94d8996b190d16067a0ef7c01ac93d124d23ba9ff1916e3f821a",
+      "account": "GDJ5BTQP5XZYVBGSPGHZIWWUPVPUMOLCH57AR3IYBBR6REA5VVBL7FPK",
+      "createdAt": "2026-11-26T12:56:13Z",
+      "successful": true
+    },
+    {
+      "kind": "release",
+      "hash": "9ea4d5c27c46faf95c362502d1bc574d6bdb0dcf65c99f2e68579a8bbbf16af3",
+      "invoiceId": "e8a597659d3a94d8996b190d16067a0ef7c01ac93d124d23ba9ff1916e3f821a",
+      "account": "GDJ5BTQP5XZYVBGSPGHZIWWUPVPUMOLCH57AR3IYBBR6REA5VVBL7FPK",
+      "createdAt": "2026-11-26T12:56:23Z",
+      "successful": true
+    },
+    {
+      "kind": "trustline",
+      "hash": "6a3640d5ece4cd670c845374cf58c00fad9866007009ae063070f848ed5cf9b6",
+      "account": "GDOBWI2R7OCL67FQ3FZIGS7HBYAZHRAU54ALFR3L2W5RHGL5KD75HBAS",
+      "createdAt": "2026-11-26T12:50:43Z",
+      "successful": true
+    },
+    {
+      "kind": "create",
+      "hash": "bf09a850532da4057bfeb57a77921b2b012c20fd8dfeb66f4b4c305dac3c011c",
+      "invoiceId": "e8a597659d3a94d8996b190d16067a0ef7c01ac93d124d23ba9ff1916e3f821a",
+      "account": "GDOBWI2R7OCL67FQ3FZIGS7HBYAZHRAU54ALFR3L2W5RHGL5KD75HBAS",
+      "createdAt": "2026-11-26T12:50:48Z",
+      "successful": true
+    },
+    {
+      "kind": "deliver",
+      "hash": "8ad2907f493fd82a79760472dcb81095f44352a7dd1eebacb320936d7253c27b",
+      "invoiceId": "e8a597659d3a94d8996b190d16067a0ef7c01ac93d124d23ba9ff1916e3f821a",
+      "account": "GDOBWI2R7OCL67FQ3FZIGS7HBYAZHRAU54ALFR3L2W5RHGL5KD75HBAS",
+      "createdAt": "2026-11-26T12:56:18Z",
+      "successful": true
+    },
+    {
+      "kind": "erp_payment",
+      "hash": "08b3418f560293e19e45d06964f086f12bc20a1a5bd537a1f7bc501f616dade1",
+      "payableId": "fd94dd4b-b10f-4437-940c-ce0e2c6af6f7",
+      "account": "GDOBWI2R7OCL67FQ3FZIGS7HBYAZHRAU54ALFR3L2W5RHGL5KD75HBAS",
+      "createdAt": "2026-11-26T12:56:28Z",
+      "successful": true
+    },
+    {
+      "kind": "erp_payment",
+      "hash": "ce0ae27c03d487f81e53d5373ce7280532b2ae6d5b72fcf4a1a6221acb9eb674",
+      "payableId": "84b9ffd9-dc91-44fa-87a5-ac4de8610f5c",
+      "account": "GDOBWI2R7OCL67FQ3FZIGS7HBYAZHRAU54ALFR3L2W5RHGL5KD75HBAS",
+      "createdAt": "2026-11-26T12:56:33Z",
+      "successful": true
+    }
+  ],
+  "assertions": [
+    "signed app sessions restored using same team-controlled keys",
+    "existing isolated ERP company reused",
+    "purchase and manufacturing verified in initial run",
+    "invoice amount bound to ERP order",
+    "exact invoice funded on Stellar Testnet",
+    "ERP shipment and on-chain delivery are distinct",
+    "buyer-authorized release settles ERP sale",
+    "duplicate release rejected",
+    "supplier and employee test liabilities paid",
+    "unauthorized payer and duplicate payment rejected",
+    "duplicate payroll rejected",
+    "seven source-linked journal records",
+    "all recorded transaction hashes confirmed successful by Horizon"
+  ],
+  "companyFeedback": {
+    "source": "User-reported informal initial review",
+    "summary": "Generally positive",
+    "secondRoundReceived": true,
+    "secondRoundSource": "company-feedback-filled.pdf",
+    "reviewBasis": "Report / demo",
+    "independentCompanyWalletActivationProven": false
+  },
+  "limitations": [
+    "Not company-operated wallet activation",
+    "Mock TRY Anchor deposit/exchange did not run",
+    "Not a real payment, production deployment or security audit",
+    "Second company feedback and presentation remain pending"
+  ],
+  "localVerificationChecks": [
+    {
+      "command": "npm run test",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "previousAttemptExitCode": 2,
+      "resolution": "Fixed local test-runner hash encoding type; typecheck rerun passed."
+    },
+    {
+      "command": "npm run contract:test",
+      "exitCode": 0
+    }
+  ],
+  "evidenceGeneratedBy": "Centerp team",
+  "companyAuthoredReport": false,
+  "note": "Contains no private keys, session cookies or live customer records. Technical assertions describe the team test; follow-up opinions are recorded separately."
+}

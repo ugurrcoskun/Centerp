@@ -1,0 +1,46 @@
+{
+  "company": "Mefapex",
+  "documentDate": "2026-11-26",
+  "receivedDate": "2026-11-26",
+  "sourceDocument": "docs/evidence/mefapex/company-feedback-filled.pdf",
+  "sourceSha256": "6db5f9661657efbbc2ce54d72b8bb060291818d686e3d8f31f9993c2e4bff3a3",
+  "sourceProvenance": "Completed PDF supplied by the project owner as company feedback; original preserved byte-for-byte.",
+  "reviewerAsWritten": "Mefapex Technical & Operations Review Team (ERP / Finance & Supply Chain)",
+  "reviewBasis": "Report / demo",
+  "handsOnTestSelected": false,
+  "independentCompanyWalletActivationProven": false,
+  "strengths": [
+    "Duplicate/idempotency guards for receipts, releases and payroll",
+    "Strict invoice-to-escrow reconciliation"
+  ],
+  "requestedImprovements": [
+    "Restore and validate TRY Anchor deposit/conversion",
+    "Synchronize ERP shipment and on-chain delivery events",
+    "Provide live ERP connector/API mapping including tax IDs, cost centers and partial shipments",
+    "Enable company-controlled wallets with role-based multisignature approvals",
+    "Complete independent Soroban audit and archive recovery validation"
+  ],
+  "nextMonthPrioritiesAsReported": [
+    "Restore and validate the TRY Anchor deposit/conversion flow.",
+    "Transition from team-operated wallets to company role-based wallet access with multisignature approval.",
+    "Automate ERP-to-chain event sync and complete Soroban audit / archive recovery."
+  ],
+  "willingToReviewAgain": true,
+  "conditionsForNextReview": [
+    "Operational TRY Anchor conversion",
+    "Company-controlled wallets with RBAC for hands-on testing",
+    "End-to-end ERP field mapping available in staging"
+  ],
+  "sharingSelections": {
+    "anonymousFeedbackAllowed": true,
+    "companyNameSharingSelected": false,
+    "directQuotationsRequireSeparateConfirmation": true
+  },
+  "status": "feedback-received; implementation-not-started",
+  "interpretationNotes": [
+    "Reviewer statements are product feedback, not fresh technical verification.",
+    "The technical test evidence remains Centerp-team-operated.",
+    "A review of the report does not prove a live hands-on company pilot.",
+    "The original form includes the blank template instruction; filled answers are visible below it."
+  ]
+}
